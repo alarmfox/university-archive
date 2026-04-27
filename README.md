@@ -18,6 +18,8 @@ To get the full material, make sure to clone with the `--recursive` flag.
   - Includes [Game Repository](./software-architecture-design/game-repository/) (submodule).
 - [Computer System Design](./computer-system-design/)
   - Includes [Fire System](./computer-system-design/fire-system/).
+- [Network Security](./network-security/)
+  - Includes [Flipping Pages](./network-security/flipping-pages/).
 - [Operative Research](./operative-research/)
   - Includes [Google HashCode 2021](./operative-research/google-hashcode-2021/).
 - [Real-Time Industrial Systems](./real-time-industrial-systems/)
