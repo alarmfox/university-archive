@@ -1,0 +1,352 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{array}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}m{#1}}
+\usepackage{amsmath}
+\usepackage{relsize}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{hyperref}
+\usepackage{tikz}
+\usepackage{tocloft}
+\usepackage[explicit]{titlesec}
+\usetikzlibrary{trees}
+
+
+\renewcommand{\contentsname}{Indice}
+\renewcommand\cftaftertoctitle{\hfill\mbox{}}
+
+
+\lstset{
+    language=C++,
+    basicstyle=\ttfamily,
+    keywordstyle=\color{blue}\ttfamily,
+    stringstyle=\color{red}\ttfamily,
+    commentstyle=\color{green}\ttfamily,
+    morecomment=[l][\color{magenta}]{\#},
+    numbers=left,
+    stepnumber=1,
+    showstringspaces=false,
+    tabsize=1,
+    breaklines=true,
+    breakatwhitespace=false,
+}
+
+\usepackage[noabbrev]{cleveref}
+
+\crefformat{section}{\S#2#1#3}
+\crefformat{subsection}{\S#2#1#3}
+\crefformat{subsubsection}{\S#2#1#3}
+\crefformat{figure}{#2Figura~#1#3}
+\crefformat{footnote}{#2\footnotemark[#1]#3}
+\crefformat{table}{#2Tabella~#1#3}
+\crefformat{equation}{#2Equazione~#1#3}
+\crefformat{chapter}{#2Capitolo~#1#3}
+
+
+\begin{document}
+
+\begin{titlepage}
+    \begin{center}
+        \vspace*{1cm}
+            
+        \Huge
+        \textbf{High perfomance and Quantum Computing}
+            
+        \vspace{0.5cm}
+        \LARGE
+        Appunti
+        
+        \vfill
+        \vspace{0.8cm}
+        
+        \Large
+        Giuseppe Capasso
+
+    \end{center}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+\section{Processori superscalari}
+\subsection{Hazard di controllo}
+Hazard di tipo controllo si manifestano dal fatto che un branch di un programma può eseguire o meno. 
+Il predittore a 2 bit (4 stati) è importante perché introduce un'inerzia: non cambio appena sbaglio.
+I due bit potenzialmente devono essere memorizzati per ogni istruzione di salto. Si implementa come una tabella
+ associativa indirizzata dal program counter nella fase di \textit{fetcb} della pipe. Sarebbe impossibile avere $2^{32}$ righe. 
+ Di solito hanno una memoria indirizzata a $10$ bit (si usano i bit meno significativi perchè il programma è contiguo quindi le istruzioni sono vicine). Visto che si usano meno bit, si può verificare un \textit{aliasing} se due istruzioni distano 1024 avranno la stessa riga nella tabella. Questo implica l'importanza di avere un meccanismo per effettuare un rollback (le predizioni possono essere sbagliate). Questi predittori si chiamano \textbf{locali} (un branch non influenza l'altro) e tengono traccia della storia locale dei salti. Bisogna vedere la tabella come un circuito combinatorio in cui entrano i bit del PC corrente ed escono quelli del predittori (si entra in un mux nella fase di fetch che può prendere l'indirizzo di salto se i bit sono "T" o si aggiunge 4 al PC corrente per non prendere l'istruzione di salto).
+
+Si potrebbe anche fare una predizione statica: si usa un bit nel processore che il programmatore può usare per dire "salta" o "non saltare" staticamente.
+
+In realtà l'esito dei salti precedenti può determinare o influenzare quelli successivi. Questo si risolve passando ai predittori globali (\textit{correlating predictors}) in cui si memorizzano i risultati degli ultimi $n$ dei salti (in maniera indipendente dal branch) (si può implementare con uno \textit{shift register}) Il valore corrente dello \textit{shift register} indirizza uno shift register a cui sono collegati $2^n$ predittori locali.
+
+Si sa sempre dove saltare o con le istruzioni di salti relativi o assoluti, tranne quando si usa \textit{RTS}. Infatti nel 68K, si fa il \textit{push} sullo stack e per tornare si fa un accesso in memoria. Alcuni processori, utilizzano uno \textit{stack} interno al processore: \textit{Routine Return Address stack}.
+
+\paragraph{Eccezioni} Anche le eccezioni generano una hazard di controllo in quanto anche loro comportano un meccanismo di esecuzione speculativo.
+
+\subsubsection{Soluzione}
+Per risolvere l'hazard, si utilizza un Reordering Buffer: una tabella che assicura che il valore dei registri sia \textit{committata} in un colpo di clock. Nel caso in cui ci sia un eccezione viene effettuato il flush del ROB e le modifiche non vengono scritte. Questo RoB assicura un commit in order. In particolare, il RoB è gestito come una coda circolare: quando questa è piena vien bloccata la fase di issue dell'istruzione.
+
+\subsection{Bottlneck}
+Effettuano una issue serializzata crea un collo di bottiglia in quanto sto facendo precedere una serie ad un parallelo. In generale, si possono effettuare più issue in parallelo. 
+
+\section{Parallelismo esplicito}
+Fino ad adesso abbiamo visto ILP (Instruction Level Parallelism) che non è sufficiente per i requisiti moderni, abbiamo bisogno del \textbf{parallelismo esplicito}. Il modo più naturale è attraverso il multithreading. Il problema notiamo che esistono 2 modi per sprecare le risorse:
+\begin{itemize}
+    \item vertical waste (temporale);
+    \item horizontal waste (functional);
+\end{itemize}
+
+Utilizzando differenti thread, possiamo assumere che le istruzioni programmi di thread differenti sono indipendenti. In questo modo, l'issue stage è molto più semplice in quanto se istruzioni sono da programmi differenti possono essere schedulati facilmente perchè un thread scriverà su registri fisicamente differenti e il processore non deve cercare differenze tra thread differenti. Un altro modo per vedere l'hardware supported multithreading è che il processore ha più chance di mettere istruzioni in parallelo. Bisogna però aggiungere un supporto fisico al processore per dare l'idea di thread. Bisogna aggiungere al processore innanzitutto copie di tutte le strutture che rappresentano il contesto di un processo (program counter, register file etc). In realtà, tutta la parte di reservation station e re-oreder buffer rimane invariata in maniera indipendente. L'unica che bisogna fare è discriminare quale thread sta usando quale registro. Se all'inizio, per indicizzare $15$ registri avevamo bisogno 4 bit, adesso bisogna avere oltre ai bit per il \textit{naming} dei registri dei bit per indicizzare il thread id (ad esempio si avranno 2 bit in piu per avere 4 thread). Dal punto di vista del processore ci saranno $16\cdot4 = 64$ registri e per costruzione un thread non scriverà mai su un registro di un altro thread. Inoltre, il processore deve poter effettuare il \textit{fetch} di istruzioni di thread differenti, questo implica che si dovrebbe leggere la instruction memory 4 indirizzi contemporaneamente (per avere 4 Program Counter).\\
+Un problema del multithread è la coerenza della memoria. Infatti, la load/store unit non è parallelizzabile (così come il \textit{fetching} dalla instruction memory). Quindi il parallelismo esplicito avviene nel processore con SMT, ma l'accesso nella memoria deve essere serializzato.
+
+\section{Architetture multicore}
+Nei processori odierni, i processori sono dotati di più core (copie fisiche di una singola CPU, che può avere parallelismo interno). Ogni core è dotato di un certo numero di livelli di cache private (tipicamente L2) e condividono il LLC (last level of cache, tipicamente L3). Un architettura tipica prevede per ogni core una cache L1 privata e una L2 condivisa in cui ogni core indirizza (attraverso i bit più significativi) in modo da accedere ad un sottoinsieme dedicato delle linee dato.
+
+Un cache controller è una macchina a stati finiti che governa il funzionamento della cache che si interfaccia con la load/store unit. A ciascuna delle linee dato della cache bisogna associare un bit di validità (un set di bit \textit{ctrl}, un tag (un set di bit che indicizza la linea dato) che viene comparato con il tag in ingresso.
+
+\subsection{Comunicazione tra core}
+è l'aspetto più importante di un sistema multi/many core. Essendo prevista una vera e propria comunicazione tra i processori attraverso le interconnessioni, bisogna evitare situazioni di deadlock.
+
+Non può esistere un protocollo a 3 stati, in ogni protocollo di corenre devono essere sempre assegnati stati transienti.
+
+Il protocollo più semplice (inutile praticamente) è uno in cui ci sono solo 2 stati: miss o hit. Se l'elemento c'è può essere usato in lettura e in scrittura, se non c'è il dato bisogna recuperarlo e quindi bisogna averlo. Si basa su un invariante: se il dato esiste, esiste una sola copia ed è tenuta da un solo core. In generale, si possono avere 2 tipi di eventi: interni al core o esterni. Quelli esterni sono richieste dalla linea di interconnessione. Il messaggio che arriva da un'interconnessione è un pacchetto che ha un header con alcuni bit dedicati al tipo di operazione (GET o PUT, ovviamente la GET dovrebbe specificare se il dato lo si vuole in lettura o in scritture). L'assunto di questa architettura è che tutti i core vedono i messaggi dell'interconnessione, quindi ad ogni i messaggi tutti i core in particolare LLC controller controllano l'header del messaggio per vedere se hanno la riga richiesta. (ovvimente essendo sempre in lettura e scrittura ad ogni GET devo invalidare il dato che un core ha).
+
+Anche LLC ha un protocollo a due stati: si trova nello stato V (valido) quando un core ha il dato richiesto, mentre si trova in I quando il dato si trova solo nell'LLC e nessun core ce l'ha. 
+
+Questo protocollo semplice serve a dare un ruolo di \textbf{owner} del blocco della risorsa. Inoltre, consente anche di non sovraccaricare LLC controller di richieste, ma ogni core è responsabile delle richieste per i dati che lui ha.
+
+
+Questo protocollo assume che le richieste sono atomiche (istantanee): infatti quando abbiamo un cache-miss la tabella prevede "READ/V" assumendo che appena viene fatta la richiesta di lettura, si porta nello stato valido.
+
+\subsubsection{Protocollo a due stati con stato transiente}
+Lo stato transiente serve a prevedere il caso in cui "la richiesta è partita, ma non ho avuto la rispsota". Infatti, ogni cache ha una coda che fa da input al cache
+controller del singolo core. Ogni volta che viene presa una operazione di LS, se c'è un cache miss, l'operazione rimane nella coda in attesa del dato dalla memoria, ma devo ricordare di 
+aver fatto la richiesta per non farla. L'operazione sarà conclusa quando il dato sarà arrivato alla cache e quindi verrà scodata l'operazione.\\
+
+Per convenzione gli stati transienti si indicano con due lettere (Stato partenza e stato di arrivo) e un apice che indica l'evento che mi ha portato nella circostanza $IS^D$
+ero in invalid (I), voglio andare nello stato shared (S), sto aspettando il dato (D).
+
+\subsubsection{Protocollo a 3 stati: Modified - Shared - Invalid}
+Ci sono due tipi di messaggi in lettura: GETS (non voglio modificare la linea), GETM (voglio modificare la linea). In questo protocollo stiamo dando per invariante: ci possono
+essere N lettori e al massimo 1 scrittore. In questo protocollo, l'owner esiste solo nel momento in cui c'è la modifica della riga.
+
+Se sono in $IS^D$ e mi arriva una richiesta di lettura in shared. Con il protocollo attuale non posso coprirlo, ho bisogno di altri stati intermedi
+in cui mi devo ricordare delle richieste ricevute mentro ero in stall. Questo introduce l'assunzione delle transazioni atomiche.
+Un'altra assunzione è che nella rete di interconnessione ci deve essere un ordine globale degli eventi.
+
+LLC con MSI è più semplice. Bisogna gestire il caso in cui il core sta scrivendo una linea.
+
+\subsection{Protocollo a 4 stati: MESI (Modified - Exclusive - Shared - Invalid)}
+Prendendo l'istruzione $i = i + 1$ sto generando 2 transazioni (Load e Store). Per ottimizzare, quando faccio la prima GETS vado nello stato
+\textit{Exclusive} (ovvero sono l'owner temporaneo della variabile $i$, quindi se ho una linea in $E$ devo rispondere come se fosse in $M$
+dando per scontato che sia modificato) quindi ho diritto a modificare la variabile poichè sono l'unico (si aggiunge un bit in più alla risposta GETS). 
+Dal punto di vista del LLC posso dare una linea in $E$ se questa si trova nello stato $I$ (ce l'ha solo LLC controller). 
+Dal suo punto di vista del cache controller se ho una linea in $E$ posso passare da $E$ a $M$ in maniera silente. In questo modo si fa una sola transazione.
+
+\subsection{Eventi di coerenza}
+Le interconnessioni nei chip sono progettate in maniera sinergica con i protocolli di comunicazione visti. In generale i messaggi sono messi in pacchetti con un header che indicano il tipo di messaggio (GetM, GetS, ecc).
+
+I messaggi in broadcast sono utili per notificare LLC quando si vuole contare quanti sharer ha una linea.
+
+Non sono solo i messaggi GetM o GetS ecc, ma anche sequenze di operazioni come \textit{Atomic read-write-modify}. In questo caso, il processore chiede la linea in modalità atomico (ad esempio si potrebbe implementare con una condizione di stallo per bloccare localmente la linea per le richieste esterne).
+
+\subsection{Consistenza della memoria senza ipotesi semplificative}
+I vincoli semplificativi sono:
+\begin{itemize}
+    \item Richieste atomiche;
+    \item Transazioni atomiche: in un frangente tra una richiesta ed una risposta, tutto resta fermo nell'interconnessione: ovviamente ciò è realistica;
+    \item arbitraggio centralizzato: broadcast di tutti i messaggi a tutti i componenti. Con questa ipotesi, stiamo ipotizzando l'ordinamento totale dei messaggi;
+\end{itemize}
+
+Rimuovere gli assunti, significa aggiungere degli stati intermedi che gestiscono le transizioni tra gli stati che non sono più ideali.
+
+\subsubsection{Richieste non atomiche}
+Si crea una finestra in cui si aspetta un ack (che prima era istantanea) $IS^{AD}$ (acknowledgement data). Quindi nella tabella, c'è la sezione in cui si vedono i propri messaggi. Quando un nodo vede un suo messaggio, si passa nello stato di ack (messaggio accettatta dall'interconnessione). In questo caso, sono ancora barrate le richieste OtherGetS ecc, perchè sono ancora nell'ipotesi di transazioni atomiche.
+
+\subsubsection{Transazioni atomiche}
+Bisogna tener presente che esistono canali separati per le richieste e le risposte siano separate. In questo caso, si apre un'altra richiesta di vulnerabilità immediatamente successiva a quella delle richieste non atomiche.
+Si va a vedere un blocco di stato M, tipo un eviction (sono più critici gli stati in cui si decide chi è owner). Quando si è nella fase $MI^A$ si continua ad essere owner, quindi nel caso di GetS devo rispondere come owner, ma dopo non sono più owner quindi devo andare in uno stato apposito ($II^A$)
+
+\subsubsection{Broadcast dei messaggi dalla rete}
+Ipotizzando un bus condiviso non è scalare, inoltre bisogna ipotizzare che la comunicazione può essere punto-punto. Una soluzione scalabile è detta a \textbf{Directory}.
+Si tratta di una struttura che linea per linea registra chi è l'owner (posso mettere l'id dell'owner) e chi sono gli sharer (devo sapere chi sono, quindi serve una maschera di N (numero massimo di processori) bit). I bit degli sharer sono il vero costo della directory (prima infatti, tutti vedevano tutto). In questo caso comunque si impone un ordinamento tra i messaggi di 2 nodi e non tutto il sistema. La directory può essere vista come punto di serializzazione per ciascuna linea (ogni linea è indipendente dalle altre, questo fa si che la directory può essere distribuita).
+
+\paragraph{Esempio: ci sono $K$ sharer e un nodo fa una richiesta in M}
+La directory deve mandare una richiesta di invalidate a tutti gli sharer (per invalidare la linea). Non si sa, quando tutti i messaggi che ciascuno degli sharer hanno avuto il messaggio di invalidate (deve contare gli $InvalidateAck$). La directory può prendere le risposte oppure deve dire al richiedente di aspettare $K$ ack.
+
+\paragraph{Esercizi}
+Scrivere programmi multithread per vedere dove si vedono le performance.
+Scrivere un programma che lavora su una porzione di dati ripetutamente (working set) e vedere come lavora la cache.
+Far vedere la distinzione tra True sharing e False Sharing. (incr 1 di una matrice e assegnare k thread una colonna della matrice).
+
+\subsection{Consistenza}
+Questo concetto è legato a cosa fa un programma su un gruppo di locazioni di memoria. Ad esempio, ho un flag e un dato su due linee diverse, se scrivo prima sul flago e poi accedo al dato, l'ordine di queste due operazioni deve essere uguale per tutti. Con tanti nodi, non è detto che i nodi vedano le opearazioni nello stesso ordine. Quando il programmatore fa un'operazione del genere fa delle assunzione sulla relazione happened-before degli eventi facendo valere la proprietà transitiva.
+\begin{equation}
+THREAD
+    ST  DATA,R_2 
+    ST  FLAG,\#1
+THREAD
+    loop LD,FLAG
+    BEQ  loop 
+    LD   R_8,DATA
+\end{equation}
+Nell'esempio i due thread comunicano attraverso la variabile data. Il programmatore assume che quando trova il flag a 1 anche il dato risulta scritto nella variabile $DATA$. Può però avvenire che la scrittura di $DATA$ per il thread 1 non è subito dopo la scrittura del \textit{flag}. Un modello di consistenza indica all'utente quale assunzioni può fare su una sequenza di operazioni.
+
+\subsubsection{Modello di coerenza forte}
+Un primo modello può essere quello a bus condiviso (SC - sequential consistency). In cui il bus fa da arbitro. Questo modello prevede regole di precedenza tra 2 load, 2 store, 1 load e 1 store e viceversa. QUindi stiamo vietando il coelescing riducendo troppo le prestazioni. Vediamo di rimuovere alcune al assunzioni da SC (vedendo quale coppia di operazioni può essere consentita out-of-order).
+
+\paragraph{Total store order - TSO} La store può essere rimandata, quindi potrei avere un write buffer (una coda quindi mantengo l'ordinamento). Le load indirizzata ad un'operazione già fatta nel write buffer (tanti comparatori sugli indirizzi del write-buffer) do direttamtente il valore con il bypass (questo significa che sto invertendo l'ordine di load e store). Infatti, questa cosa funziona nel processore locale, mentre la store (essendo nel write buffer) non è ancora in locale. Questa cosa in realtà non è un problema (vedere esemoio prod-cons sulle slide 120): dato che le due store sono state messe nle buffer, ma l'ordine è mantenuto (il programmatore sa che il flag è a 1 ho messo il dato in memoria).
+
+\subsection{Interconnessioni}
+
+\subsubsection{Topologie}
+Sono divise in 2 categorie: dirette (si assume che ogni nodo abbia almeno un interfaccia di comunicazione per comunicare con un sottoinsieme di altri processori) o indirette (hanno un componente che permette di comunicare i core).
+\paragraph{Topologia dirette: Hypercubes}
+Si hanno $m$ bit per indirizzare $2^m$ nodi. In base ad $m$, ogni nodo può comunicare con altrettanti $m$ entità nella rete. In questa rete, è interessante $m$ (grado della rete) che caratterizza sia la dimensione che il costo della rete (che è logaritmico in base al numero di nodi). Un altro parametro prestazionale è il diametro (misura della latenza) e coincide con $m$ indicante il numero di nodi da attraversare nel caso peggiore.\\
+Una generalizazione degli hypercube sono gli hypercube \textit{k-ary n-cube} ($k=4$ si parla di toroidi) in cui $k$ indica il numero di nodi con cui ci si collega. Aumentando $k$ è possibile avere più nodi senza cambiare il grado della rete $m$. ovviamente non è possibile avere una struttura $k-n$ su un chip pertanto di solito un SoC ha una mesh.
+
+\paragraph{Topologie dirette: array, anelli e Barrel Shifter}
+Le topologie ad array hanno il numero minore di link: $N-1$, però hanno la latenza massima.\\
+
+Gli anelli aumentati offrono una topologia completamente connessa. Hanno la migliore latenza in quanto i nodi a coppie sono connessi (diametro è $O(1)$), ma è il più costoso in quanto ci sono $N\cdot(N-1)$ collegamenti da creare.
+
+La via di mezzo tra i due approcci è il \textbf{Barrel shifter} in cui ogni nodo è collegato direttamente a quelli che distano $2*i$. Quindi in questo caso il costo è logaritmico della rete. Infatti, numero di link non è $N\cdot (N-1)$, ma $N \cdot \log (N)$. Il diametro di questa rete è $\log n$.
+
+\paragraph{Multistage networks}
+Le reti si distinguono in bloccanti e non bloccanti. Uno switch può essere in configurazione: straight, cross, broadcast. In particolare, nelle reti omega o butterfly c'è per forza la configurazione bloccante, poichè le configurazioni possibili $2^n$ contro le $m!$ combinazioni per connettere tutti gli ingressi e le uscite.
+La rete butterfly ha una struttura ricorsiva ad albero.
+
+\paragraph{Rete di Benes}
+Ho una rete di ingresso e una di uscita, che arrivano ad una rete interna. FUnziona tipo il processi di induzione. Dividiamo la rete al centro in 2 parti ($n/2$) e assumiamo non bloccante (una permutazione degli ingressi può arrivare ad una permutazione delle uscite). Iterando il ragionamento, anche i due blocchi a loro volta possono essere divisi per due fino ad arrivare allo switch base.\\
+Alla base ogni switch prende una coppia consecutiva di ingressi. L'uscita di uno switch in ingresso va nella rete alta, l'altro nella rete bassa.
+
+\paragraph{Rete di Clos}
+Si tratta di un caso particolare delle reti di Benes in particolare sulla dimensione degli switch. Ad esempio si possono avere degli switch $nxm$ (quindi diversi). Inoltre, devo avere tante reti interne quante ne sono quelle di uscita: quindi $m$ di dimensione $r$ (dimensione degli ingressi). Può essere implementa con 2 rete butterfly back2back.
+
+\subsubsection{Routing}
+
+\subsubsection{Flow control}
+Rigurda interazione tra due nodi vicini: lo stato di un'interconnesione dipende dallo stato di un buffer. In particolare, i due nodi di una rete devono scambiarsi informazioni sullo stato delle interconnessioni per sapere se le code sono piene. I messaggi hanno 4 componenti:
+\begin{itemize}
+    \item phlit: linee fisice di silicio da un porto ad un altro;
+    \item flit: l'unità a cui si applica una scelta di routing (unità elementare). A livello di routing, un flit (con tutti i suoi pezzi) hanno la stessa route (calcolata una sola volta). è la quantità di bit che si trasmette in una singola operazione;
+    \item Pacchetti: unità che fanno parte dello stesso messaggio, ma possono avere diverse route;
+\end{itemize}
+
+\paragraph{Circuit switching}
+Pre allocazione di tutte le risorse di rete, per tutti i pacchetti di una comunicazione. In questo caso, la configurazione è monopolizzata.
+In questa strategia si manda prima un pacchetto di setup "S". Qundo la destinazione riceve "S", risponde con un "A" (ack) per confermare la pipeline che si è creata. In questo modo la sorgente può inviare pacchetti senza avere contese. Fino a quando la sorgente non manda un pacchetto "T" (teardown, chiudere il canale) per liberare le risorse. In questo caso, si ha una bassa utilizzazione della banda.
+
+\paragraph{Store and forward e Virtual Cut Through}
+I router devono ricevere tutto il paccehetto e poi avvia l'inoltro. Al contrario, nel VCT flit diversi di uno stesso messaggio sono gestiti su nodi diversi. Questo approccio è molto complicato poichè richiede la gestione di metadata più grandi.
+
+\newpage
+\section{Modelli di programmazione di architetture parallele}
+Il parallelismo interno è trasparente al programmatore. Per andare oltre, il fattore 2 dell SMT bisogna passare a quello esplicito. In questa prima parte, vediamo il parallelismo vettoriale: si va a parallelizzare la parte di "execute" nel processore (SIMD).
+
+\subsection{SIMD}Dal punto di vista hardware abbiamo un insieme di $N$ ALU e altrettante coppie registri di input e output. L'architettura SIMD ha dei vantaggi perchè confina in un solo punto tutto l'hardware extra (migliorando il throughput per un fattore $X$ (ad esempio $x4$)). Dal punto di vista energetico, può essere conveniente avere un'architettura SIMD perchè metriche come wattxthroughput sono migliori, perchè di fatto aggiungendo strutture di controllo (che servono a fare calcolo, ma non dissipano quantità di Joule significativa) offrono più operazioni per clock per poca aggiunta di potenza dissipata.\\
+Normalmente, le estensioni vettoriali sono all'interno del processore. Ci sono casi in cui le accelerazioni vengono delegate a dispositivi esterni: gpu/dsp/fpga che sono collegabili su bus condivisi. Questi dispositivi esterni creano nuovi problemi come ad esempio la comunicazione, spostamento dei dati ecc. Questi problemi non ci questi problemi, infatti si possono avere istruzioni "speciali" che possono essere trasparenti al programmatore.\\
+In queste architetture è cruciale come si accede ai dati. In particolare, devono essere contigui. Ad esempio, per un'immagine RGB si hanno 3 byte consecutivi per pixel (\textit{array of structs}), in questo si caso si parla di \textit{stride = 3} (le componenti omologhe distano $3$).
+
+\paragraph{ALU}
+Nei processori odierni si ha un ALU a dimensione fissata (128bit)
+e può essere utilizzata o come un'unica ALU o come tante ALU che fanno tante operazioni su dati di piccole dimensioni. Ad esempio, se avessi un ALU da $256bit$, potrei avere 4 operandi da $64bit$. Questo approccio è poco usato in pratica: in realtà l'ALU a 256bit al suo interno contiene unità distinte a diversa dimensione con dei multiplexer che indirizzano i dati a seconda della richiesta. Al programmatore, questa soluzione è trasparente.
+
+\paragraph{$If-Then-Else$}
+Molti processori SIMD permettono di fare selettivamente le operazioni. Ad esempio se nel corpo dell'if ho $if (v > 0)$ devo fare $8$ confronti che produce una maschera che va in ingresso all'alu. L'ALU farà entrambi le operazioni (sia quelle del ramo $true$ che quelle del ramo $false$), ma grazie alla maschera sceglierò il risultato che mi serve. In questo modo, si eliminano i salti del programma (eliminando la divergenza).
+
+\clearpage
+\section{GPU - Graphic Processor Unit}
+Le GPU orchestrano dal punto di vista hardware (e software) un parallelismo in maniera simile a quello che si fa con $pthread$ o i thread del C++.
+
+Le GPU nvidia chiamano i processori SMP (streaming processor); mentre le \textit{lane} sono dette \textit{core}. Una GPU Nvidia (a partire da Fermi) è composta da SM con una cache L1 interna e una L2 esterna condivisa con gli altri processori e una RAM propria (si parla di GDDR, protocollo proprietario NVIDIA per la RAM) che è  diversa dalla memoria del sistema. Inoltre, sono presenti delle Special Function Unit che effettuano delle operazioni complicate (come quelle trigonometriche).
+
+NVIDIA chiama i thread Warp che possono essere mappati sui core \\(nell'accezione classica). Cioè in ogni scatoletta, possono esserci 48 thread e quindi 48 program counter. Questo significa con ogni lane (ad esempio ne sono 32), deve avere abbastanza registri per supportare i dati che fanno parte dei \textbf{warp}.
+
+NVIDIA chiama \textbf{CUDA Thread} è la singola esecuzione che esegue un \textbf{warp}. Ad esempio, un \textit{warp} può essere fatto da $32$ \textit{Cuda Thread}. I programmi per le GPU sono difficilmente portabili in quanto il programmatore deve sapere in quanti \textbf{blocchi} deve dividere il codice. Il \textbf{blocco} è il concetto fondamentale per programmare una GPU: si tratta dell'insieme di istruzioni eseguite in un SM. 
+
+Le versioni successive della Fermi non aggiungono altro, ma dalla Volta in poi hanno introdotto support per i tensor core per il deep learning.
+
+\subsection{Programmazione di GPU}
+CUDA è un modello di programmazione specifico di NVIDIA per ottimizzare i programmi che fanno operazioni parallelizzabili.
+
+Una GPU ha un propria memoria ed esegue un proprio programma detto \textbf{kernel}. Dal punto di vista CUDA, c'è la parte Host (CPU, memoria) e la parte device (la GPU). Il programmatore deve sapeere quale parte del mio programma deve andare sull'host e quale deve andare sul \textbf{device} (si tratta della parte \textit{unified} dell'acronimo CUDA). Un kernel è una funzione C che esegue con una GPU. In questo caso, bisogna specificare come prendere i dati dalla memoria dell'host e metterli nella memoria del device.
+
+\clearpage
+\section{Quantum Computing}
+I concetti alla base del Quantum Computing risalgono agli studi di meccanica quantistica di fine 1800. Non esiste, al momento, un modo standard di realizzare un calcolatore quantistico, ma molti dimostratori della fattibilità. La difficoltà principale è quello di replicare un fenomeno di riferimento su singole particelle.
+
+\paragraph{Requisiti tecnologici} 
+I requisiti di un sistema quantistico ricalcano quelli con le tecnologie classiche:
+\begin{itemize}
+    \item scalabilità rispetto al numero di qubit;
+    \item inizializzazione di qubit a determinati valori;
+    \item individuazione di un insieme completo funzionalmenten di porte quantistiche;
+    \item lettura dell'uscita del calcolatore quantistica;
+    \item le porte quantistiche devono essere più veloci del loro tempo di decoerenza;
+\end{itemize}
+
+Il calcolo quantistico è visto come un'estensione che lavora insieme alla tecnologia classica per accelerare un workload al fine di risolvere un collo di bottiglia. Infatti, non tutti i problemi possono essere risolti con un acceleratore quantistico, ma solo una classe molto ridotta degli stessi.
+
+\subsection{Strumenti matematici}
+
+\paragraph{Numeri complessi}
+I numeri complessi possono avere 3 rappresentazioni:
+\begin{itemize}
+    \item Parte reale e parte immaginaria: $c = a+jb$;
+    \item Trigonometrica: $|c|\cos \alpha + j |c| \sin \alpha$;
+    \item Esponenziale: $|c| e^{j\alpha}$
+\end{itemize}
+
+\paragraph{Spazi vettoriale su numeri complessi}
+Un vettore può essere visto come una $n-upla$ di numeri complessi. Lo spazio vettoriale dei numeri complessi si basa su un campo complesso.
+
+Un concetto importante degli spazi vettoriali è quello di base. Una base consente di generare altri vettori. In particolare, interessano i concetti di indipendenza e dipendenza lineare.
+
+\paragraph{Applicazioni lineari}
+Un'applicazione lineare può essere vista come\\ un'operazione di un vettore per una matrice (se quadrata restiamo nello stesso spazio). 
+Gli autovalori di un'applicazione lineare sono discreti e dopo che ad un qubit è stata applicata una trasformazione lineare lungo un autovettore, si dimostra che il suo stato finale collassa su un autovalore. L'insieme degli autovalori è detto insieme degli osservabili.
+
+Se uno dei vettori si trova su un autovalore dell'applicazione, ci rimane. Altrimenti, esiste una probabilità non nulla che questo collassi su un'altra direzione. Questa probabilità si calcola facendo il prodotto scalare di un vettore con gli autovettori.
+
+\paragraph{Matrici hermitiane}
+Una matrice hermitiana è una matriche che può essere trasposta e coniugata. Questa matrice ha tutti autovalori reali (osservabili)
+
+\begin{equation*}
+    A = A^\dagger
+\end{equation*}
+In meccanica quantistica, un osservabile si ottiene applicando un operatore hermitiano da cui si ottengono autovalori reali. Inoltre, una matrice hermitian si può diagonlizzare usando una matrice con tutti autovalori sulla diagonale.
+
+Tra le matrici hermitiane si distinguono quelle unitarie. In cui vale:
+
+\begin{equation*}
+    U\cdot U^\dagger = I
+\end{equation*}
+
+Le matrice unitaria è un'invariante per il prodotto scalare (non si altera la norma, non si allunga o si accorcia un vettore $\rightarrow$ facendo muovere il vettore su una sfera). 
+
+\begin{equation*}
+    <u\cdot v,u\cdot v> = <v, v>
+\end{equation*}
+
+\paragraph{Prodotto tensoriale}
+
+Il prodotto tensoriale $v x w = t$ è un vettore che appartiene ad un altro spazio la cui base è formata dal prodotto cartesianeo delle basi dei vettori di partenza.
+
+\paragraph{Prodotto scalare}
+L'operazione di prodotto scalare fornisce una nozione di ortogonalità per due vettori di uno spazio vettoriale. In particolare, deve rispettare diverse proprietà; ad esempio:
+
+\begin{itemize}
+    \item $<v, \alpha \cdot w> = \alpha <v, w>$;
+    \item $<v, w> = <\alpha \cdot v, w> = \alpha_{coniguato} <v, w>$;
+    \item $\sqrt{<v, v>} = ||v||$;
+\end{itemize}
+
+\section{Trasformazione di qubit}
+
+
+\end{document}

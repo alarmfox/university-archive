@@ -1,0 +1,187 @@
+#define N 4
+#define K 3
+#define N_MSG_B 2
+#define N_MSG_C 1
+
+#define RTE	return
+
+int turn = 0;
+int curr_char = 0;
+
+int rx_msg_b = N_MSG_B;
+int rx_msg_c = N_MSG_C;
+
+int iter = K;
+
+int *piada_b = 0x00002004;
+int *piaca_b = 0x00002005;
+
+int *piada_c = 0x00002008;
+int *piaca_c = 0x00002009;
+
+int lock = 0;
+
+unsigned char mem[N * K * (N_MSG_B + N_MSG_C)];
+
+void main() {
+	init_pia_rx(&piada_b, &piaca_b);
+	init_pia_rx(&piada_c, &piaca_c);
+	abilita_int();
+
+	while(1) {};
+}
+
+// init_pia_rx configura la pia in ricezione
+// piada: indirizzo del registro dato della pia
+// piaca: indirizzo del registro controllo della pia
+void init_pia_rx(int *piada, int* piaca) {
+	*piaca = 0x00;
+	*piada = 0x00;
+
+	*piada = 00100101;
+}
+
+// shut_pia spegne la pia impostando a zero il registro di controllo
+void shut_pia(int *piaca) {
+	*piaca = 0x00;
+}
+
+void isr_b() {
+	if (!TAS(lock)) {
+		RTE;
+	}
+
+	// turno di C
+	if (turn == 2) {
+		// controllo se C è sospeso: CRA7_C == 0?
+		if ((*piaca_c) & 0x80 != 0) {
+			// se si, effettuo la lettura del carattere e lo salvo in memoria
+			handle(&piada_c, 2);
+		}
+		// altrimenti rilascio il lock ed esco dalla ISR (restando bloccato)
+		lock = 0;
+		RTE;
+	}
+
+	// primo messaggio, prendo il turno
+	if (turn == 0) {
+		turn = 1;
+	}
+
+	// turno di B
+	handle(&piada_b, 1);
+
+	lock = 0;
+	RTE;
+}
+
+void isr_c() {
+	if (!TAS(lock)) {
+		RTE;
+	}
+
+	// turno di B
+	if (turn == 1) {
+		goto WAKE_B;
+	}
+
+	// primo messaggio, prendo il turno
+	if (turn == 0) {
+		turn = 1;
+	}
+
+	// turno di C
+	handle(&piada_c, 2);
+
+	// ciclo necessario se non si vogliono fare assunzioni sulla velocità di trasmissione di B.
+	// Dato che ISR_C è meno prioritaria di ISR_B, può succedere che durante l'esecuzione 
+	// della funzione "handle(&piada_1, 11)" (in particolare dopo la lettura), B invii 
+	// immediatamente un altro carattere ad A, causando la sospensione di questa ISR (che è sempre ISR_C),
+	// ma, trovando il LOCK occupato, si sospende. Alla sospensione della ISR_B, questa ISR continua dal 
+	// punto in cui era stata interrotta e, se non ci fosse il ciclo, terminerebbe lasciando il sistema 
+	// in deadlock.
+	// Se si volesse evitare il ciclo, bisognerebbe assumere che B invia dopo un tempo maggiore a quello
+	// della durata della funzione handle
+WAKE_B:
+	while(((*piaca_b) & 0x80 != 0) && turn == 1) {
+		handle(&piada_b, 1);
+	}
+
+	lock = 0;
+	RTE;
+}
+
+// handle esegue la routine delle ISR
+// Parametri:
+// piad: indirizzo del registro dato della pia da cui leggere
+// pia: id della periferica interrompente (1 se B, 2 se C)
+void handle(int *piada, int pia) {
+	// leggo il carattere dalla periferica
+	unsigned char c = read_char(&piada);
+
+	// applico la logica del programma alla periferica
+	handle_char(c, pia);
+}
+
+// handle_char salva il carattere in memoria, controlla se si è arrivati alla fine del messaggio
+// e, in caso affermativo, cambia il turno alle periferiche.
+void handle_char(char c, int pia) {
+
+	// salvo il carattere nella posizione puntata dalla variabile curr_char
+	mem[curr_char] = c;
+
+	curr_char++;
+
+	// controllo se sono alla fine di un messaggio
+	if(curr_char % N == 0) {
+
+		// decremento il numero di messaggi da ricevere a seconda della periferica
+		// (valore della variabile pia)
+		if (pia == 1) {
+			rx_msg_b--;
+		} else {
+			rx_msg_c--;
+		}
+
+		// controllo di essere alla fine dell'iterazione
+		if(rx_msg_b == 0 && rx_msg_c == 0) {
+
+			// in caso positivo, resetto i contatori di messaggi
+			// per un'altra iterazione
+			rx_msg_b = N_MSG_B;
+			rx_msg_c = N_MSG_C;
+
+			// decremento il contatore delle iterazioni
+			iter--;
+			// se sono arrivato a 0, il programma è finito
+			// e spengo le periferiche
+			if (iter == 0) {
+				shut_pia(&piaca_b);
+				shut_pia(&piaca_c);
+				return;
+			}
+			turn = 0;
+			// decido quale periferica sbloccare
+			if (pia == 1 && ((*piaca_c) & 0x80 != 0)) {
+				turn = 2;
+				handle(&piada_c, 2);
+			} else if (pia == 2 && ((*piaca_b) & 0x80 != 0)) {
+				turn = 1;
+				handle(&piada_b, 1);
+			}
+		// ho finito un messaggio ma non l'iterazione
+		} else {
+			// se b ha finito i messaggi per questa iterazione, sblocco C dandogli il turno
+			if (rx_msg_b == 0) {
+				turn = 2;
+				handle(&piada_c, 2);
+			}
+			// se c ha finito i messaggi per questa iterazione, sblocco B dandogli il turno
+			else if (rx_msg_c == 0) {
+				turn = 1;
+				handle(&piada_b, 1);
+			}
+		}
+		
+	}
+}

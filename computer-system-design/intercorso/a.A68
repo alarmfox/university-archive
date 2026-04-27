@@ -1,0 +1,503 @@
+	ORG $8000
+* N grandezza dei messaggi, K iterazioni
+N	EQU	4
+K	EQU	3
+
+* messaggi da ricevere da B e da C
+N_MSG_B		EQU	2
+N_MSG_C		EQU	1
+ITER_MSG	EQU	N_MSG_C+N_MSG_B
+
+* pia 1
+PIADA_1	EQU		$2008
+PIACA_1	EQU		$2009
+
+* pia 2
+PIADA_2	EQU		$2004
+PIACA_2	EQU		$2005
+
+* variabili per la memoria
+MEM      	DS.B	N*K*ITER_MSG
+CURR_CHAR	DC.B	0
+ITER		DC.B	K
+
+* messaggi da ricevere nell'iterazione corrente
+RX_MSG_B	DC.B	N_MSG_B
+RX_MSG_C	DC.B	N_MSG_C
+
+* variabile per la mutua esclusione
+LOCK		DC.B		0
+
+* periferica da cui si sta ricevendo il messaggio
+* 0: libero
+* 1: PIA 1
+* 2: PIA 2
+TURN		DC.B		0
+
+	ORG $8200
+MAIN    
+	* configurazione pia1 in ricezione
+	MOVE.L	#PIACA_1,A0
+	MOVE.L	#PIADA_1,A1
+	MOVE.L	A0,-(SP)
+	MOVE.L	A1,-(SP)
+	JSR		CFG_PIA_RX
+	ADDQ	#8,SP
+
+	* configurazione pia2 in ricezione
+	MOVE.L	#PIACA_2,A0
+	MOVE.L	#PIADA_2,A1
+	MOVE.L	A0,-(SP)
+	MOVE.L	A1,-(SP)
+	JSR		CFG_PIA_RX
+	ADDQ	#8,SP
+
+	* abilito interruzioni
+	MOVE.W	SR,D0
+	ANDI.W	#$D8FF,D0
+	MOVE.W	D0,SR
+	
+	* completo l'handshaking
+	MOVEA		#PIADA_1,A0
+	MOVE.B	(A0),D0
+
+	MOVEA		#PIADA_2,A0
+	MOVE.B	(A0),D0
+
+LOOP	JMP		LOOP
+
+*****
+* Configura una pia in ricezione con i registri passati in ingresso
+* la firma è cfg_pia_rx(&piada, &piaca)
+* STACK
+* *	
+* *	ADDR PIADA_X (4byte)
+* *	ADDR PIACA_X (4byte)
+* *
+*****
+CFG_PIA_RX
+	* salvo il contesto
+	LINK		A6,#0
+	MOVEM.L	A0-A1,-(SP)
+	
+	* carico PIADA_x in A0
+	MOVE.L	8(A6),A0
+
+	* carico PIACA_x in A1
+	MOVE.L	12(A6),A1
+
+	* imposto la direzione dei dati in ingresso
+	MOVE.B	#0,(A1)
+	MOVE.B	#0,(A0)
+	
+	* configuro la perifierica per lavorare sotto interruzione
+	* con il protocollo 100
+	MOVE.B	#%00100101,(A1)
+
+	* ripristino il contesto
+	MOVEM.L	(SP)+,A0-A1
+	UNLK		A6
+
+	RTS
+
+*****
+* Disattiva la pia mettendo #$00 nel registro di controllo 
+* void shut_piat(&piac)
+* *	ADDR PIACA_X (4byte)
+* *
+*****
+SHUT_PIA
+	* salvo il contesto
+	LINK		A6,#0
+	MOVE.L		A0,-(SP)
+
+	* carico PIADA_x in A0
+	MOVE.L	8(A6),A0
+
+	* metto 0 nel registro di controllo
+	MOVE.B	#0,(A0)
+
+	* ripristino il contesto
+	MOVE.L	(SP)+,A0
+	UNLK		A6
+
+	RTS
+
+*****
+* Legge un carattere dal registro il cui indirizzo è passato in ingresso
+* e lo ritorna
+* la firma è char read_char(piada)
+* STACK
+* *	
+* *	PIADA_X 4byte
+* * PADDING	1 byte
+* * RESULT	1 byte
+*****
+READ_CHAR
+	*salvatggio contesto
+	LINK	A6,#0
+	MOVEM.L	D0-D7/A0-A7,-(SP)
+
+	* prendo i parametri
+	MOVE.L	8(A6),A0
+
+	* leggo il carattere dal registro
+	MOVE.B	(A0),D0
+
+	* metto nel valore di ritorno
+	MOVE.B	D0,12(A6)
+
+	* ripristino contesto
+	MOVEM.L	(SP)+,D0-D7/A0-A7
+	UNLK	A6
+	RTS
+
+*****
+* Salva il carattere in ingresso e applica la logica del programma tenendo conto da chi
+* ha letto il carattere:
+* gestisce i turni nel caso in cui un messaggio sia completato;
+* spegne le periferiche nel caso in cui il programma sia terminato;
+* la firma è void handle_char(char c, int pia)
+* c: carattere letto dal dispositivo;
+* pia: dispositivo da cui è stato letto il carattere:
+* 	- 1: se il carattere è stato letto da B;
+*	- 2: se il carattere è stato letto da C;
+* STACK
+* *	
+* *	char (1byte)
+* * pia	(1 byte)
+*****
+HANDLE_CHAR
+	*salvatggio contesto
+	LINK	A6,#0
+	MOVEM.L	D0-D7/A0-A7,-(SP)
+
+	* prendo i parametri dallo stack
+	MOVE.B	9(A6),D0 * carattere
+	MOVE.B	8(A6),D1 * pia
+	
+	* carico le variabili per salvare il carattere in memoria
+	MOVE.B	CURR_CHAR,D3
+	LEA		MEM,A0
+
+	* scrivo il carattere in memoria
+	MOVE.B	D0,(A0,D3)
+
+	* incremento il contatore di caratteri
+	ADDI.B	#1,CURR_CHAR
+
+	* controllo se ho ricevuto un messaggio intero
+	MOVE.B	CURR_CHAR,D0
+	DIVU	#N,D0
+	ANDI.L	#$ffff0000,D0
+
+	* se non ho terminato il messaggio esco dalla funzione
+	BNE		HNDL_CHAR_OUT
+
+			* pia == 1?
+CHANGE_TURN	CMPI.B	#1,D1
+			BNE		RX_FROM_C
+			SUBI.B	#1,RX_MSG_B
+			BRA		CK_ITER_FIN
+RX_FROM_C	SUBI.B	#1,RX_MSG_C
+
+	* controllo se ho finito l'iterazione
+CK_ITER_FIN		MOVE.B	RX_MSG_B,D0
+				MOVE.B	RX_MSG_C,D2
+				NOT		D0
+				NOT		D2
+
+				* rx_msg == 0 and rx_msg_c == 0?
+				AND.B	D0,D2
+				NOT		D2
+				BNE		CK_TRN_C
+
+				* reset dei contatori
+				MOVE.B	#N_MSG_B,RX_MSG_B
+				MOVE.B	#N_MSG_C,RX_MSG_C
+				SUBI.B	#1,ITER
+
+				BNE		RLS_TURN
+
+				* spengo le periferiche
+				* disattivo pia1
+				MOVE.L	#PIACA_1,A0
+				MOVE.L	A0,-(SP)
+				JSR		SHUT_PIA
+				ADDQ	#4,SP
+
+				* disattivo pia2
+				MOVE.L	#PIACA_2,A0
+				MOVE.L	A0,-(SP)
+				JSR		SHUT_PIA
+				ADDQ	#4,SP
+
+
+				* reset turno
+				BRA		RLS_TURN
+
+				* rx_msg_b == 0?
+CK_TRN_C		CMPI.B	#0,RX_MSG_B
+				BNE		CK_TRN_B
+				
+				* do il turno a C
+				MOVE.B	#2,TURN
+				
+				* sveglio C se sospeso
+				CLR.B		D0
+				MOVE.L	#PIACA_2,A0
+				MOVE.B	(A0),D0
+
+				* maschero il flag CRA7
+				ANDI.B	#$80,D0
+
+				* C non è sospeso
+				BEQ		HNDL_CHAR_OUT
+
+				MOVE.L	#PIADA_2,A0
+				MOVE.B	#2,-(SP)
+				MOVE.B	#0,-(SP)
+				MOVE.L	A0,-(SP)
+				JSR		HANDLE
+				ADDQ	#6,SP
+
+				BRA		HNDL_CHAR_OUT
+
+				* rx_msg_c == 0?
+CK_TRN_B		CMPI.B	#0,RX_MSG_C
+				BNE		RLS_TURN
+
+				* do il turno a	B
+				MOVE.B	#1,TURN
+
+				* sveglio B se sospeso
+				MOVE.L	#PIACA_1,A0
+				CLR.B		D0
+				MOVE.B	(A0),D0
+
+				* maschero il flag CRA7
+				ANDI.B	#$80,D0
+
+				* B non è sospeso
+				BEQ		HNDL_CHAR_OUT
+
+				MOVE.L	#PIADA_1,A0
+				MOVE.B	#1,-(SP)
+				MOVE.B	#0,-(SP)
+				MOVE.L	A0,-(SP)
+				JSR		HANDLE
+				ADDQ	#6,SP
+
+				BRA		HNDL_CHAR_OUT
+
+				* se mi ha interrotto B provo a svegliare C se è sospeso
+				
+RLS_TURN		* mi ha interrotto B?
+				CMPI.B	#1,D1
+
+				BNE		HNDL_CHAR_OUT
+
+				* C è sospeso?
+				MOVE.L	#PIACA_2,A0
+				MOVE.B	(A0),D0
+				ANDI.B	#$80,D0
+
+				BEQ		CK_WAKE_B
+				
+				* se C è sospeso gli do il turno e lo sblocco
+				MOVE.B	#2,TURN
+
+				MOVE.L	#PIADA_2,A0
+				MOVE.B	#2,-(SP)
+				MOVE.B	#0,-(SP)
+				MOVE.L	A0,-(SP)
+				JSR		HANDLE
+				ADDQ	#6,SP
+				
+				BRA		HNDL_CHAR_OUT
+
+				*mi ha interrotto C, provo a svegliare B se è sospeso
+CK_WAKE_B			MOVE.L	#PIACA_1,A0
+
+				MOVE.B	(A0),D0
+				ANDI.B	#$80,D0
+
+				BEQ		HNDL_CHAR_OUT
+				MOVE.B	#1,TURN
+
+				* sveglio B
+				MOVE.L	#PIADA_1,A0
+				MOVE.B	#1,-(SP)
+				MOVE.B	#0,-(SP)
+				MOVE.L	A0,-(SP)
+				JSR		HANDLE	
+				ADDQ	#6,SP		
+
+	* ripristino contesto
+HNDL_CHAR_OUT 	MOVEM.L	(SP)+,D0-D7/A0-A7
+				UNLK	A6
+				RTS
+
+HANDLE
+	LINK	A6,#0
+	MOVEM.L	D0-D7/A0-A7,-(SP)
+
+	* prendo l'indirizzo del registro dato della PIA: PIADA_X
+	MOVE.L	8(A6),A0
+
+	* prendo id della periferica interrompente:
+	* 1: interrompe B
+	* 2: interrompe C
+	MOVE.B	13(A6),D0
+
+	* preparo i parametri per read_char
+	ADDA	#-2,SP
+	MOVE.L	A0,-(SP)
+	JSR		READ_CHAR
+	ADDQ	#4,SP
+
+	* prendo il risultato
+	MOVE.B	(SP)+,D1
+	ADDQ		#1,SP
+
+	* preparo i parametri per handle_char
+	MOVE.B	D1,-(SP)
+	MOVE.B	D0,-(SP)
+	JSR		HANDLE_CHAR
+	ADDQ	#2,SP
+
+	MOVEM.L	(SP)+,D0-D7/A0-A7
+	UNLK	A6
+	RTS
+
+* mappare a 70
+	ORG	$8500
+ISR_B		TAS		LOCK
+			BNE		OUT_B
+			*salvatggio contesto
+			LINK	A6,#0
+			MOVEM.L	D0-D7/A0-A7,-(SP)
+
+			* turn == 2?
+			CMPI.B	#2,TURN
+			BNE		B_TURN_C
+
+			* leggo il registro CA7
+			MOVE.L	#PIACA_2,A0
+			MOVE.B	(A0),D0
+
+			* maschero il flag CRA7
+			ANDI.B	#$80,D0
+
+			* C non è sospeso
+			BEQ		RLS_LK_B
+
+			* sveglio C
+			MOVE.L	#PIADA_2,A0
+			MOVE.B	#2,-(SP)
+			MOVE.B	#0,-(SP)
+			MOVE.L	A0,-(SP)
+			JSR		HANDLE
+			ADDQ	#6,SP
+
+			* fine procedura
+			BRA		RLS_LK_B
+
+			* turn == 0 ?
+B_TURN_C	CMPI.B	#0,TURN
+			BNE		TURN_B
+
+			* prende il turno B
+			MOVE.B	#1,TURN
+
+			* eseguo la routine di B
+TURN_B		MOVE.L	#PIADA_1,A0
+			MOVE.B	#1,-(SP)
+			MOVE.B	#0,-(SP)
+			MOVE.L	A0,-(SP)
+			JSR		HANDLE
+			ADDQ	#6,SP
+
+* rilascio il lock
+RLS_LK_B	MOVE.B	#0,LOCK
+
+* ripristino contesto
+			MOVEM.L	(SP)+,D0-D7/A0-A7
+			UNLK	A6
+OUT_B		RTE
+
+* mappare a $6c
+	ORG	$8700
+ISR_C		TAS		LOCK
+			BNE		OUT_C
+			*salvatggio contesto
+			LINK	A6,#0
+			MOVEM.L	D0-D7/A0-A7,-(SP)
+
+			* turn == 1?
+			CMPI.B	#1,TURN
+			BEQ		WAKE_B
+
+			* turn == 0 ?
+C_TURN_0	CMPI.B	#0,TURN
+			BNE		TURN_C
+
+			* prende il turno C
+			MOVE.B	#2,TURN
+
+			* eseguo la routine di C
+TURN_C		MOVE.L	#PIADA_2,A0
+			MOVE.B	#2,-(SP)
+			MOVE.B	#0,-(SP)
+			MOVE.L	A0,-(SP)
+			JSR		HANDLE
+			ADDQ	#6,SP
+
+		* controllo se B è sospeso
+		* leggo il registro CA7
+		* Questo ciclo è necessario perchè C è meno prioritario di B
+		* Può succedere che mentre si sta svegliando B nella procedura HANDLE
+		* B sia così veloce da re-inviare un carattere, interrompere questa ISR,
+		* trovare il LOCK occupato e sospendersi. Se non si ri-effettua il check dopo 
+		* HANDLE il sistema si può trovare in DEADLOCK.
+		* Questo consente di non fare nessuna assunzione sulla frequenza di invio di B e C.
+		* Non è necessario farlo in B perchè, visto che C è meno prioritario di B, C
+		* non interromperà mai B dopo aver letto C.
+WAKE_B	
+		CMPI.B	#1,TURN
+		BNE		RLS_LK_C
+
+		MOVE.L	#PIACA_1,A0
+		MOVE.B	(A0),D0
+
+		* maschero il flag CRA7
+		ANDI.B	#$80,D0
+
+		BEQ	RLS_LK_C
+
+		* risveglio B se necessario
+		MOVE.L	#PIADA_1,A0
+		MOVE.B	#1,-(SP)
+		MOVE.B	#0,-(SP)
+		MOVE.L	A0,-(SP)
+		JSR		HANDLE
+		ADDQ	#6,SP
+		BRA		WAKE_B
+
+* rilascio il lock
+RLS_LK_C	MOVE.B	#0,LOCK
+
+* ripristino contesto
+CLN_C
+			MOVEM.L	(SP)+,D0-D7/A0-A7
+			UNLK	A6
+OUT_C		RTE
+
+
+	END     MAIN
+
+
+
+
+
+

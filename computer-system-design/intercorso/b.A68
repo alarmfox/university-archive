@@ -1,0 +1,149 @@
+	ORG $8000
+* N grandezza dei messaggi, K iterazioni
+N	EQU	4
+K	EQU	3
+
+* pia in trasmissione
+PIADB	EQU	$2006
+PIACB	EQU	$2007
+
+* messaggio da inviare
+CHAR DC.B    $BB
+END_MSG	DC.B	$00
+
+* messaggi inviati
+TX_MSG	DC.B	K*2
+TX_CHAR DC.B	0
+
+	ORG	$8200
+MAIN	
+		MOVE.L	#PIACB,A0
+		MOVE.L	#PIADB,A1
+		MOVE.L	A0,-(SP)
+		MOVE.L	A1,-(SP)
+		JSR		CFG_PIA_TX
+		ADDQ	#8,SP
+
+		* lettura fittizia
+        MOVEA		#PIADB,A0
+        MOVE.B	(A0),D0
+	    
+        MOVE.W	SR,D0
+	    ANDI.W	#$D8FF,D0	*maschera per le interruzioni. 
+	    MOVE.W	D0,SR
+
+LOOP	JMP	LOOP
+
+
+* Configura una pia in ricezione con i registri passati in ingresso
+* la firma è cfg_pia_tx(piadb, piacb)
+* STACK
+* *	
+* *	ADDR PIADB_X (4byte)
+* *	ADDR PIACB_X (4byte)
+* *
+CFG_PIA_TX
+	* salvo il contesto
+	LINK		A6,#0
+	MOVEM.L	A0-A1,-(SP)
+	
+	* carico PIADB_x in A0
+	MOVE.L	8(A6),A0
+
+	* carico PIACB_x in A1
+	MOVE.L	12(A6),A1
+
+	* imposto la direzione dei dati in ingresso
+	MOVE.B	#0,(A1)
+	MOVE.B	#$ff,(A0)
+	
+	* configuro la perifierica per lavorare sotto interruzione
+	* con il protocollo 100
+	MOVE.B	#%11100101,(A1)
+
+	* ripristino il contesto
+	MOVEM.L	(SP)+,A0-A1
+	UNLK		A6
+
+	RTS
+
+* Disattiva la pia mettendo #$00 nel registro di controllo 
+* *	ADDR PIACA (4byte)
+* *
+
+SHUT_PIA
+	* salvo il contesto
+	LINK		A6,#0
+	MOVEM.L		A0,-(SP)
+
+	* carico PIADA_x in A0
+	MOVE.L	8(A6),A0
+
+	* metto 0 nel registro di controllo
+	MOVE.B	#0,(A0)
+
+	* ripristino il contesto
+	MOVEM.L	(SP)+,A0
+	UNLK		A6
+
+	RTS
+
+
+*interruzione livello	4 mappato a $70
+	ORG	$8800
+ISR
+	*salvatggio contesto
+	LINK	A6,#0
+	MOVEM.L	D0-D7/A0-A7,-(SP)
+
+	* ciclo per simulare la produzione di un nuovo valore da inviare
+	* serve a mostrare un ordine diverso di arrivo dei messaggi
+	CLR D7
+	
+	* carico registro dato della periferica
+	MOVEA	#PIADB,A0
+	
+	MOVE.B	CHAR,D0
+	MOVE.B	TX_CHAR,D1
+	CMP.B		#N-1,D1
+	BNE		SND
+	MOVE.B	END_MSG,D0
+
+	* invio il nuovo carattere
+SND	
+	* lettura fittizia
+	MOVE.B	(A0),D1
+	MOVE.B	D0,(A0)
+
+
+	* aggiorno il contatore dei caratteri
+	ADDI.B	#1,TX_CHAR
+
+	* controllo se ho inviato un messaggio
+	CMPI.B	#N,TX_CHAR
+	BNE		ISR_CLN
+	
+	* azzero il contatore dei caratteri
+	MOVE.B	#0,TX_CHAR
+
+	* ho inviato un messaggio
+	SUBi.B	#1,TX_MSG
+
+	* se TX_MSG != 0, non ho finito
+	BNE		ISR_CLN
+
+	* disattivo la pia
+   	MOVE.L  #PIACB,A0
+	MOVE.L	A0,-(SP)
+	JSR		SHUT_PIA
+	ADDA	#4,SP
+	
+ISR_CLN
+	* ripristino contesto
+	MOVEM.L	(SP)+,D0-D7/A0-A7
+	UNLK	A6
+	
+	RTE
+	
+	END	MAIN
+

@@ -1,0 +1,145 @@
+00008000                                     1  	ORG $8000
+00008000                                     2  * N grandezza dei messaggi, K iterazioni
+00008000  =00000004                          3  N	EQU	4
+00008000  =00000003                          4  K	EQU	3
+00008000                                     5  
+00008000                                     6  * pia in trasmissione
+00008000  =00002006                          7  PIADB	EQU	$2006
+00008000  =00002007                          8  PIACB	EQU	$2007
+00008000                                     9  
+00008000                                    10  * messaggio da inviare
+00008000  CC                                11  CHAR DC.B    $CC
+00008001  FF                                12  END_MSG	DC.B	$FF
+00008002                                    13  
+00008002                                    14  * messaggi inviati
+00008002  03                                15  TX_MSG	DC.B	K
+00008003  00                                16  TX_CHAR DC.B	0
+00008004                                    17  
+00008200                                    18  	ORG	$8200
+00008200                                    19  MAIN	
+00008200  207C 00002007                     20  		MOVE.L	#PIACB,A0
+00008206  227C 00002006                     21  		MOVE.L	#PIADB,A1
+0000820C  2F08                              22  		MOVE.L	A0,-(SP)
+0000820E  2F09                              23  		MOVE.L	A1,-(SP)
+00008210  4EB9 0000822C                     24  		JSR		CFG_PIA_TX
+00008216  504F                              25  		ADDQ	#8,SP
+00008218                                    26  
+00008218                                    27  		* lettura fittizia
+00008218  307C 2006                         28          MOVEA		#PIADB,A0
+0000821C  1010                              29          MOVE.B	(A0),D0
+0000821E                                    30  	    
+0000821E  40C0                              31          MOVE.W	SR,D0
+00008220  0240 D8FF                         32  	    ANDI.W	#$D8FF,D0	*maschera per le interruzioni. 
+00008224  46C0                              33  	    MOVE.W	D0,SR
+00008226                                    34  
+00008226  4EF9 00008226                     35  LOOP	JMP	LOOP
+0000822C                                    36  
+0000822C                                    37  
+0000822C                                    38  * Configura una pia in ricezione con i registri passati in ingresso
+0000822C                                    39  * la firma è cfg_pia_tx(piadb, piacb)
+0000822C                                    40  * STACK
+0000822C                                    41  * *	
+0000822C                                    42  * *	ADDR PIADB_X (4byte)
+0000822C                                    43  * *	ADDR PIACB_X (4byte)
+0000822C                                    44  * *
+0000822C                                    45  CFG_PIA_TX
+0000822C                                    46  	* salvo il contesto
+0000822C  4E56 0000                         47  	LINK		A6,#0
+00008230  48E7 00C0                         48  	MOVEM.L	A0-A1,-(SP)
+00008234                                    49  	
+00008234                                    50  	* carico PIADB_x in A0
+00008234  206E 0008                         51  	MOVE.L	8(A6),A0
+00008238                                    52  
+00008238                                    53  	* carico PIACB_x in A1
+00008238  226E 000C                         54  	MOVE.L	12(A6),A1
+0000823C                                    55  
+0000823C                                    56  	* imposto la direzione dei dati in ingresso
+0000823C  12BC 0000                         57  	MOVE.B	#0,(A1)
+00008240  10BC 00FF                         58  	MOVE.B	#$ff,(A0)
+00008244                                    59  	
+00008244                                    60  	* configuro la perifierica per lavorare sotto interruzione
+00008244                                    61  	* con il protocollo 100
+00008244  12BC 00E5                         62  	MOVE.B	#%11100101,(A1)
+00008248                                    63  
+00008248                                    64  	* ripristino il contesto
+00008248  4CDF 0300                         65  	MOVEM.L	(SP)+,A0-A1
+0000824C  4E5E                              66  	UNLK		A6
+0000824E  4E75                              67  	RTS
+00008250                                    68  
+00008250                                    69  * Disattiva la pia mettendo #$00 nel registro di controllo 
+00008250                                    70  * *	ADDR PIACA (4byte)
+00008250                                    71  * *
+00008250                                    72  
+00008250                                    73  SHUT_PIA
+00008250                                    74  	* salvo il contesto
+00008250  4E56 0000                         75  	LINK		A6,#0
+00008254  48E7 0080                         76  	MOVEM.L		A0,-(SP)
+00008258                                    77  
+00008258                                    78  	* carico PIADA_x in A0
+00008258  206E 0008                         79  	MOVE.L	8(A6),A0
+0000825C                                    80  
+0000825C                                    81  	* metto 0 nel registro di controllo
+0000825C  10BC 0000                         82  	MOVE.B	#0,(A0)
+00008260                                    83  
+00008260                                    84  	* ripristino il contesto
+00008260  4CDF 0100                         85  	MOVEM.L	(SP)+,A0
+00008264  4E5E                              86  	UNLK		A6
+00008266                                    87  
+00008266  4E75                              88  	RTS
+00008268                                    89  
+00008268                                    90  *interruzione livello	4 mappato a $70
+00008800                                    91  	ORG	$8800
+00008800                                    92  ISR
+00008800                                    93  	*salvatggio contesto
+00008800  4E56 0000                         94  	LINK	A6,#0
+00008804  48E7 FFFF                         95  	MOVEM.L	D0-D7/A0-A7,-(SP)
+00008808                                    96  	
+00008808  4247                              97  	CLR D7
+0000880A                                    98  
+0000880A                                    99  	* carico registro dato della periferica
+0000880A  307C 2006                        100  	MOVEA	#PIADB,A0
+0000880E                                   101  
+0000880E  1039 00008000                    102  	MOVE.B	CHAR,D0
+00008814  1239 00008003                    103  	MOVE.B	TX_CHAR,D1
+0000881A  B23C 0003                        104  	CMP.B		#N-1,D1
+0000881E  6600 0008                        105  	BNE		SND
+00008822  1039 00008001                    106  	MOVE.B	END_MSG,D0
+00008828                                   107  
+00008828                                   108  SND	
+00008828                                   109  	* lettura fittizia
+00008828  1210                             110  	MOVE.B	(A0),D1
+0000882A  1080                             111  	MOVE.B	D0,(A0)
+0000882C                                   112  	
+0000882C                                   113  	* aggiorno il contatore dei caratteri
+0000882C  5239 00008003                    114  	ADDI.B	#1,TX_CHAR
+00008832                                   115  
+00008832                                   116  	* controllo se ho inviato un messaggio
+00008832  0C39 0004 00008003               117  	CMPI.B	#N,TX_CHAR
+0000883A  6600 0026                        118  	BNE		ISR_CLN
+0000883E                                   119  	
+0000883E                                   120  	* azzero il contatore dei caratteri
+0000883E  13FC 0000 00008003               121  	MOVE.B	#0,TX_CHAR
+00008846                                   122  
+00008846                                   123  	* ho inviato un messaggio
+00008846  5339 00008002                    124  	SUBi.B	#1,TX_MSG
+0000884C                                   125  
+0000884C                                   126  	* se TX_MSG != 0, non ho finito
+0000884C  6600 0014                        127  	BNE		ISR_CLN
+00008850                                   128  
+00008850                                   129  	* disattivo la pia
+00008850  207C 00002007                    130      MOVE.L  #PIACB,A0
+00008856  2F08                             131  	MOVE.L	A0,-(SP)
+00008858  4EB9 00008250                    132  	JSR		SHUT_PIA
+0000885E  DEFC 0004                        133  	ADDA	#4,SP
+00008862                                   134  	
+00008862                                   135  ISR_CLN
+00008862                                   136  	* ripristino contesto
+00008862  4CDF FFFF                        137  	MOVEM.L	(SP)+,D0-D7/A0-A7
+00008866  4E5E                             138  	UNLK	A6
+00008868                                   139  	
+00008868  4E73                             140  	RTE
+0000886A                                   141  	
+0000886A                                   142  	END	MAIN
+
+No errors detected
+No warnings generated

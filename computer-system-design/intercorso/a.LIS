@@ -1,0 +1,500 @@
+00008000                                     1  	ORG $8000
+00008000                                     2  * N grandezza dei messaggi, K iterazioni
+00008000  =00000004                          3  N	EQU	4
+00008000  =00000003                          4  K	EQU	3
+00008000                                     5  
+00008000                                     6  * messaggi da ricevere da B e da C
+00008000  =00000002                          7  N_MSG_B		EQU	2
+00008000  =00000001                          8  N_MSG_C		EQU	1
+00008000  =00000003                          9  ITER_MSG	EQU	N_MSG_C+N_MSG_B
+00008000                                    10  
+00008000                                    11  * pia 1
+00008000  =00002008                         12  PIADA_1	EQU		$2008
+00008000  =00002009                         13  PIACA_1	EQU		$2009
+00008000                                    14  
+00008000                                    15  * pia 2
+00008000  =00002004                         16  PIADA_2	EQU		$2004
+00008000  =00002005                         17  PIACA_2	EQU		$2005
+00008000                                    18  
+00008000                                    19  * variabili per la memoria
+00008000                                    20  MEM      	DS.B	N*K*ITER_MSG
+00008024  00                                21  CURR_CHAR	DC.B	0
+00008025  03                                22  ITER		DC.B	K
+00008026                                    23  
+00008026                                    24  * messaggi da ricevere nell'iterazione corrente
+00008026  02                                25  RX_MSG_B	DC.B	N_MSG_B
+00008027  01                                26  RX_MSG_C	DC.B	N_MSG_C
+00008028                                    27  
+00008028                                    28  * variabile per la mutua esclusione
+00008028  00                                29  LOCK		DC.B		0
+00008029                                    30  
+00008029                                    31  * periferica da cui si sta ricevendo il messaggio
+00008029                                    32  * 0: libero
+00008029                                    33  * 1: PIA 1
+00008029                                    34  * 2: PIA 2
+00008029  00                                35  TURN		DC.B		0
+0000802A                                    36  
+00008200                                    37  	ORG $8200
+00008200                                    38  MAIN    
+00008200                                    39  	* configurazione pia1 in ricezione
+00008200  207C 00002009                     40  	MOVE.L	#PIACA_1,A0
+00008206  227C 00002008                     41  	MOVE.L	#PIADA_1,A1
+0000820C  2F08                              42  	MOVE.L	A0,-(SP)
+0000820E  2F09                              43  	MOVE.L	A1,-(SP)
+00008210  4EB9 0000824A                     44  	JSR		CFG_PIA_RX
+00008216  504F                              45  	ADDQ	#8,SP
+00008218                                    46  
+00008218                                    47  	* configurazione pia2 in ricezione
+00008218  207C 00002005                     48  	MOVE.L	#PIACA_2,A0
+0000821E  227C 00002004                     49  	MOVE.L	#PIADA_2,A1
+00008224  2F08                              50  	MOVE.L	A0,-(SP)
+00008226  2F09                              51  	MOVE.L	A1,-(SP)
+00008228  4EB9 0000824A                     52  	JSR		CFG_PIA_RX
+0000822E  504F                              53  	ADDQ	#8,SP
+00008230                                    54  
+00008230                                    55  	* abilito interruzioni
+00008230  40C0                              56  	MOVE.W	SR,D0
+00008232  0240 D8FF                         57  	ANDI.W	#$D8FF,D0
+00008236  46C0                              58  	MOVE.W	D0,SR
+00008238                                    59  	
+00008238                                    60  	* completo l'handshaking
+00008238  307C 2008                         61  	MOVEA		#PIADA_1,A0
+0000823C  1010                              62  	MOVE.B	(A0),D0
+0000823E                                    63  
+0000823E  307C 2004                         64  	MOVEA		#PIADA_2,A0
+00008242  1010                              65  	MOVE.B	(A0),D0
+00008244                                    66  
+00008244  4EF9 00008244                     67  LOOP	JMP		LOOP
+0000824A                                    68  
+0000824A                                    69  *****
+0000824A                                    70  * Configura una pia in ricezione con i registri passati in ingresso
+0000824A                                    71  * la firma è cfg_pia_rx(&piada, &piaca)
+0000824A                                    72  * STACK
+0000824A                                    73  * *	
+0000824A                                    74  * *	ADDR PIADA_X (4byte)
+0000824A                                    75  * *	ADDR PIACA_X (4byte)
+0000824A                                    76  * *
+0000824A                                    77  *****
+0000824A                                    78  CFG_PIA_RX
+0000824A                                    79  	* salvo il contesto
+0000824A  4E56 0000                         80  	LINK		A6,#0
+0000824E  48E7 00C0                         81  	MOVEM.L	A0-A1,-(SP)
+00008252                                    82  	
+00008252                                    83  	* carico PIADA_x in A0
+00008252  206E 0008                         84  	MOVE.L	8(A6),A0
+00008256                                    85  
+00008256                                    86  	* carico PIACA_x in A1
+00008256  226E 000C                         87  	MOVE.L	12(A6),A1
+0000825A                                    88  
+0000825A                                    89  	* imposto la direzione dei dati in ingresso
+0000825A  12BC 0000                         90  	MOVE.B	#0,(A1)
+0000825E  10BC 0000                         91  	MOVE.B	#0,(A0)
+00008262                                    92  	
+00008262                                    93  	* configuro la perifierica per lavorare sotto interruzione
+00008262                                    94  	* con il protocollo 100
+00008262  12BC 0025                         95  	MOVE.B	#%00100101,(A1)
+00008266                                    96  
+00008266                                    97  	* ripristino il contesto
+00008266  4CDF 0300                         98  	MOVEM.L	(SP)+,A0-A1
+0000826A  4E5E                              99  	UNLK		A6
+0000826C                                   100  
+0000826C  4E75                             101  	RTS
+0000826E                                   102  
+0000826E                                   103  *****
+0000826E                                   104  * Disattiva la pia mettendo #$00 nel registro di controllo 
+0000826E                                   105  * void shut_piat(&piac)
+0000826E                                   106  * *	ADDR PIACA_X (4byte)
+0000826E                                   107  * *
+0000826E                                   108  *****
+0000826E                                   109  SHUT_PIA
+0000826E                                   110  	* salvo il contesto
+0000826E  4E56 0000                        111  	LINK		A6,#0
+00008272  2F08                             112  	MOVE.L		A0,-(SP)
+00008274                                   113  
+00008274                                   114  	* carico PIADA_x in A0
+00008274  206E 0008                        115  	MOVE.L	8(A6),A0
+00008278                                   116  
+00008278                                   117  	* metto 0 nel registro di controllo
+00008278  10BC 0000                        118  	MOVE.B	#0,(A0)
+0000827C                                   119  
+0000827C                                   120  	* ripristino il contesto
+0000827C  205F                             121  	MOVE.L	(SP)+,A0
+0000827E  4E5E                             122  	UNLK		A6
+00008280                                   123  
+00008280  4E75                             124  	RTS
+00008282                                   125  
+00008282                                   126  *****
+00008282                                   127  * Legge un carattere dal registro il cui indirizzo è passato in ingresso
+00008282                                   128  * e lo ritorna
+00008282                                   129  * la firma è char read_char(piada)
+00008282                                   130  * STACK
+00008282                                   131  * *	
+00008282                                   132  * *	PIADA_X 4byte
+00008282                                   133  * * PADDING	1 byte
+00008282                                   134  * * RESULT	1 byte
+00008282                                   135  *****
+00008282                                   136  READ_CHAR
+00008282                                   137  	*salvatggio contesto
+00008282  4E56 0000                        138  	LINK	A6,#0
+00008286  48E7 FFFF                        139  	MOVEM.L	D0-D7/A0-A7,-(SP)
+0000828A                                   140  
+0000828A                                   141  	* prendo i parametri
+0000828A  206E 0008                        142  	MOVE.L	8(A6),A0
+0000828E                                   143  
+0000828E                                   144  	* leggo il carattere dal registro
+0000828E  1010                             145  	MOVE.B	(A0),D0
+00008290                                   146  
+00008290                                   147  	* metto nel valore di ritorno
+00008290  1D40 000C                        148  	MOVE.B	D0,12(A6)
+00008294                                   149  
+00008294                                   150  	* ripristino contesto
+00008294  4CDF FFFF                        151  	MOVEM.L	(SP)+,D0-D7/A0-A7
+00008298  4E5E                             152  	UNLK	A6
+0000829A  4E75                             153  	RTS
+0000829C                                   154  
+0000829C                                   155  *****
+0000829C                                   156  * Salva il carattere in ingresso e applica la logica del programma tenendo conto da chi
+0000829C                                   157  * ha letto il carattere:
+0000829C                                   158  * gestisce i turni nel caso in cui un messaggio sia completato;
+0000829C                                   159  * spegne le periferiche nel caso in cui il programma sia terminato;
+0000829C                                   160  * la firma è void handle_char(char c, int pia)
+0000829C                                   161  * c: carattere letto dal dispositivo;
+0000829C                                   162  * pia: dispositivo da cui è stato letto il carattere:
+0000829C                                   163  * 	- 1: se il carattere è stato letto da B;
+0000829C                                   164  *	- 2: se il carattere è stato letto da C;
+0000829C                                   165  * STACK
+0000829C                                   166  * *	
+0000829C                                   167  * *	char (1byte)
+0000829C                                   168  * * pia	(1 byte)
+0000829C                                   169  *****
+0000829C                                   170  HANDLE_CHAR
+0000829C                                   171  	*salvatggio contesto
+0000829C  4E56 0000                        172  	LINK	A6,#0
+000082A0  48E7 FFFF                        173  	MOVEM.L	D0-D7/A0-A7,-(SP)
+000082A4                                   174  
+000082A4                                   175  	* prendo i parametri dallo stack
+000082A4  102E 0009                        176  	MOVE.B	9(A6),D0 * carattere
+000082A8  122E 0008                        177  	MOVE.B	8(A6),D1 * pia
+000082AC                                   178  	
+000082AC                                   179  	* carico le variabili per salvare il carattere in memoria
+000082AC  1639 00008024                    180  	MOVE.B	CURR_CHAR,D3
+000082B2  41F9 00008000                    181  	LEA		MEM,A0
+000082B8                                   182  
+000082B8                                   183  	* scrivo il carattere in memoria
+000082B8  1180 3000                        184  	MOVE.B	D0,(A0,D3)
+000082BC                                   185  
+000082BC                                   186  	* incremento il contatore di caratteri
+000082BC  5239 00008024                    187  	ADDI.B	#1,CURR_CHAR
+000082C2                                   188  
+000082C2                                   189  	* controllo se ho ricevuto un messaggio intero
+000082C2  1039 00008024                    190  	MOVE.B	CURR_CHAR,D0
+000082C8  80FC 0004                        191  	DIVU	#N,D0
+000082CC  0280 FFFF0000                    192  	ANDI.L	#$ffff0000,D0
+000082D2                                   193  
+000082D2                                   194  	* se non ho terminato il messaggio esco dalla funzione
+000082D2  6600 0160                        195  	BNE		HNDL_CHAR_OUT
+000082D6                                   196  
+000082D6                                   197  			* pia == 1?
+000082D6  0C01 0001                        198  CHANGE_TURN	CMPI.B	#1,D1
+000082DA  6600 000C                        199  			BNE		RX_FROM_C
+000082DE  5339 00008026                    200  			SUBI.B	#1,RX_MSG_B
+000082E4  6000 0008                        201  			BRA		CK_ITER_FIN
+000082E8  5339 00008027                    202  RX_FROM_C	SUBI.B	#1,RX_MSG_C
+000082EE                                   203  
+000082EE                                   204  	* controllo se ho finito l'iterazione
+000082EE  1039 00008026                    205  CK_ITER_FIN		MOVE.B	RX_MSG_B,D0
+000082F4  1439 00008027                    206  				MOVE.B	RX_MSG_C,D2
+000082FA  4640                             207  				NOT		D0
+000082FC  4642                             208  				NOT		D2
+000082FE                                   209  
+000082FE                                   210  				* rx_msg == 0 and rx_msg_c == 0?
+000082FE  C400                             211  				AND.B	D0,D2
+00008300  4642                             212  				NOT		D2
+00008302  6600 0040                        213  				BNE		CK_TRN_C
+00008306                                   214  
+00008306                                   215  				* reset dei contatori
+00008306  13FC 0002 00008026               216  				MOVE.B	#N_MSG_B,RX_MSG_B
+0000830E  13FC 0001 00008027               217  				MOVE.B	#N_MSG_C,RX_MSG_C
+00008316  5339 00008025                    218  				SUBI.B	#1,ITER
+0000831C                                   219  
+0000831C  6600 00AA                        220  				BNE		RLS_TURN
+00008320                                   221  
+00008320                                   222  				* spengo le periferiche
+00008320                                   223  				* disattivo pia1
+00008320  207C 00002009                    224  				MOVE.L	#PIACA_1,A0
+00008326  2F08                             225  				MOVE.L	A0,-(SP)
+00008328  4EB9 0000826E                    226  				JSR		SHUT_PIA
+0000832E  584F                             227  				ADDQ	#4,SP
+00008330                                   228  
+00008330                                   229  				* disattivo pia2
+00008330  207C 00002005                    230  				MOVE.L	#PIACA_2,A0
+00008336  2F08                             231  				MOVE.L	A0,-(SP)
+00008338  4EB9 0000826E                    232  				JSR		SHUT_PIA
+0000833E  584F                             233  				ADDQ	#4,SP
+00008340                                   234  
+00008340                                   235  
+00008340                                   236  				* reset turno
+00008340  6000 0086                        237  				BRA		RLS_TURN
+00008344                                   238  
+00008344                                   239  				* rx_msg_b == 0?
+00008344  0C39 0000 00008026               240  CK_TRN_C		CMPI.B	#0,RX_MSG_B
+0000834C  6600 0038                        241  				BNE		CK_TRN_B
+00008350                                   242  				
+00008350                                   243  				* do il turno a C
+00008350  13FC 0002 00008029               244  				MOVE.B	#2,TURN
+00008358                                   245  				
+00008358                                   246  				* sveglio C se sospeso
+00008358  4200                             247  				CLR.B		D0
+0000835A  207C 00002005                    248  				MOVE.L	#PIACA_2,A0
+00008360  1010                             249  				MOVE.B	(A0),D0
+00008362                                   250  
+00008362                                   251  				* maschero il flag CRA7
+00008362  0200 0080                        252  				ANDI.B	#$80,D0
+00008366                                   253  
+00008366                                   254  				* C non è sospeso
+00008366  6700 00CC                        255  				BEQ		HNDL_CHAR_OUT
+0000836A                                   256  
+0000836A  207C 00002004                    257  				MOVE.L	#PIADA_2,A0
+00008370  1F3C 0002                        258  				MOVE.B	#2,-(SP)
+00008374  1F3C 0000                        259  				MOVE.B	#0,-(SP)
+00008378  2F08                             260  				MOVE.L	A0,-(SP)
+0000837A  4EB9 0000843C                    261  				JSR		HANDLE
+00008380  5C4F                             262  				ADDQ	#6,SP
+00008382                                   263  
+00008382  6000 00B0                        264  				BRA		HNDL_CHAR_OUT
+00008386                                   265  
+00008386                                   266  				* rx_msg_c == 0?
+00008386  0C39 0000 00008027               267  CK_TRN_B		CMPI.B	#0,RX_MSG_C
+0000838E  6600 0038                        268  				BNE		RLS_TURN
+00008392                                   269  
+00008392                                   270  				* do il turno a	B
+00008392  13FC 0001 00008029               271  				MOVE.B	#1,TURN
+0000839A                                   272  
+0000839A                                   273  				* sveglio B se sospeso
+0000839A  207C 00002009                    274  				MOVE.L	#PIACA_1,A0
+000083A0  4200                             275  				CLR.B		D0
+000083A2  1010                             276  				MOVE.B	(A0),D0
+000083A4                                   277  
+000083A4                                   278  				* maschero il flag CRA7
+000083A4  0200 0080                        279  				ANDI.B	#$80,D0
+000083A8                                   280  
+000083A8                                   281  				* B non è sospeso
+000083A8  6700 008A                        282  				BEQ		HNDL_CHAR_OUT
+000083AC                                   283  
+000083AC  207C 00002008                    284  				MOVE.L	#PIADA_1,A0
+000083B2  1F3C 0001                        285  				MOVE.B	#1,-(SP)
+000083B6  1F3C 0000                        286  				MOVE.B	#0,-(SP)
+000083BA  2F08                             287  				MOVE.L	A0,-(SP)
+000083BC  4EB9 0000843C                    288  				JSR		HANDLE
+000083C2  5C4F                             289  				ADDQ	#6,SP
+000083C4                                   290  
+000083C4  6000 006E                        291  				BRA		HNDL_CHAR_OUT
+000083C8                                   292  
+000083C8                                   293  				* se mi ha interrotto B provo a svegliare C se è sospeso
+000083C8                                   294  				
+000083C8                                   295  RLS_TURN		* mi ha interrotto B?
+000083C8  0C01 0001                        296  				CMPI.B	#1,D1
+000083CC                                   297  
+000083CC  6600 0066                        298  				BNE		HNDL_CHAR_OUT
+000083D0                                   299  
+000083D0                                   300  				* C è sospeso?
+000083D0  207C 00002005                    301  				MOVE.L	#PIACA_2,A0
+000083D6  1010                             302  				MOVE.B	(A0),D0
+000083D8  0200 0080                        303  				ANDI.B	#$80,D0
+000083DC                                   304  
+000083DC  6700 0026                        305  				BEQ		CK_WAKE_B
+000083E0                                   306  				
+000083E0                                   307  				* se C è sospeso gli do il turno e lo sblocco
+000083E0  13FC 0002 00008029               308  				MOVE.B	#2,TURN
+000083E8                                   309  
+000083E8  207C 00002004                    310  				MOVE.L	#PIADA_2,A0
+000083EE  1F3C 0002                        311  				MOVE.B	#2,-(SP)
+000083F2  1F3C 0000                        312  				MOVE.B	#0,-(SP)
+000083F6  2F08                             313  				MOVE.L	A0,-(SP)
+000083F8  4EB9 0000843C                    314  				JSR		HANDLE
+000083FE  5C4F                             315  				ADDQ	#6,SP
+00008400                                   316  				
+00008400  6000 0032                        317  				BRA		HNDL_CHAR_OUT
+00008404                                   318  
+00008404                                   319  				*mi ha interrotto C, provo a svegliare B se è sospeso
+00008404  207C 00002009                    320  CK_WAKE_B			MOVE.L	#PIACA_1,A0
+0000840A                                   321  
+0000840A  1010                             322  				MOVE.B	(A0),D0
+0000840C  0200 0080                        323  				ANDI.B	#$80,D0
+00008410                                   324  
+00008410  6700 0022                        325  				BEQ		HNDL_CHAR_OUT
+00008414  13FC 0001 00008029               326  				MOVE.B	#1,TURN
+0000841C                                   327  
+0000841C                                   328  				* sveglio B
+0000841C  207C 00002008                    329  				MOVE.L	#PIADA_1,A0
+00008422  1F3C 0001                        330  				MOVE.B	#1,-(SP)
+00008426  1F3C 0000                        331  				MOVE.B	#0,-(SP)
+0000842A  2F08                             332  				MOVE.L	A0,-(SP)
+0000842C  4EB9 0000843C                    333  				JSR		HANDLE	
+00008432  5C4F                             334  				ADDQ	#6,SP		
+00008434                                   335  
+00008434                                   336  	* ripristino contesto
+00008434  4CDF FFFF                        337  HNDL_CHAR_OUT 	MOVEM.L	(SP)+,D0-D7/A0-A7
+00008438  4E5E                             338  				UNLK	A6
+0000843A  4E75                             339  				RTS
+0000843C                                   340  
+0000843C                                   341  HANDLE
+0000843C  4E56 0000                        342  	LINK	A6,#0
+00008440  48E7 FFFF                        343  	MOVEM.L	D0-D7/A0-A7,-(SP)
+00008444                                   344  
+00008444                                   345  	* prendo l'indirizzo del registro dato della PIA: PIADA_X
+00008444  206E 0008                        346  	MOVE.L	8(A6),A0
+00008448                                   347  
+00008448                                   348  	* prendo id della periferica interrompente:
+00008448                                   349  	* 1: interrompe B
+00008448                                   350  	* 2: interrompe C
+00008448  102E 000D                        351  	MOVE.B	13(A6),D0
+0000844C                                   352  
+0000844C                                   353  	* preparo i parametri per read_char
+0000844C  DEFC FFFE                        354  	ADDA	#-2,SP
+00008450  2F08                             355  	MOVE.L	A0,-(SP)
+00008452  4EB9 00008282                    356  	JSR		READ_CHAR
+00008458  584F                             357  	ADDQ	#4,SP
+0000845A                                   358  
+0000845A                                   359  	* prendo il risultato
+0000845A  121F                             360  	MOVE.B	(SP)+,D1
+0000845C  524F                             361  	ADDQ		#1,SP
+0000845E                                   362  
+0000845E                                   363  	* preparo i parametri per handle_char
+0000845E  1F01                             364  	MOVE.B	D1,-(SP)
+00008460  1F00                             365  	MOVE.B	D0,-(SP)
+00008462  4EB9 0000829C                    366  	JSR		HANDLE_CHAR
+00008468  544F                             367  	ADDQ	#2,SP
+0000846A                                   368  
+0000846A  4CDF FFFF                        369  	MOVEM.L	(SP)+,D0-D7/A0-A7
+0000846E  4E5E                             370  	UNLK	A6
+00008470  4E75                             371  	RTS
+00008472                                   372  
+00008472                                   373  * mappare a 70
+00008500                                   374  	ORG	$8500
+00008500  4AF9 00008028                    375  ISR_B		TAS		LOCK
+00008506  6600 007C                        376  			BNE		OUT_B
+0000850A                                   377  			*salvatggio contesto
+0000850A  4E56 0000                        378  			LINK	A6,#0
+0000850E  48E7 FFFF                        379  			MOVEM.L	D0-D7/A0-A7,-(SP)
+00008512                                   380  
+00008512                                   381  			* turn == 2?
+00008512  0C39 0002 00008029               382  			CMPI.B	#2,TURN
+0000851A  6600 002E                        383  			BNE		B_TURN_C
+0000851E                                   384  
+0000851E                                   385  			* leggo il registro CA7
+0000851E  207C 00002005                    386  			MOVE.L	#PIACA_2,A0
+00008524  1010                             387  			MOVE.B	(A0),D0
+00008526                                   388  
+00008526                                   389  			* maschero il flag CRA7
+00008526  0200 0080                        390  			ANDI.B	#$80,D0
+0000852A                                   391  
+0000852A                                   392  			* C non è sospeso
+0000852A  6700 004A                        393  			BEQ		RLS_LK_B
+0000852E                                   394  
+0000852E                                   395  			* sveglio C
+0000852E  207C 00002004                    396  			MOVE.L	#PIADA_2,A0
+00008534  1F3C 0002                        397  			MOVE.B	#2,-(SP)
+00008538  1F3C 0000                        398  			MOVE.B	#0,-(SP)
+0000853C  2F08                             399  			MOVE.L	A0,-(SP)
+0000853E  4EB9 0000843C                    400  			JSR		HANDLE
+00008544  5C4F                             401  			ADDQ	#6,SP
+00008546                                   402  
+00008546                                   403  			* fine procedura
+00008546  6000 002E                        404  			BRA		RLS_LK_B
+0000854A                                   405  
+0000854A                                   406  			* turn == 0 ?
+0000854A  0C39 0000 00008029               407  B_TURN_C	CMPI.B	#0,TURN
+00008552  6600 000A                        408  			BNE		TURN_B
+00008556                                   409  
+00008556                                   410  			* prende il turno B
+00008556  13FC 0001 00008029               411  			MOVE.B	#1,TURN
+0000855E                                   412  
+0000855E                                   413  			* eseguo la routine di B
+0000855E  207C 00002008                    414  TURN_B		MOVE.L	#PIADA_1,A0
+00008564  1F3C 0001                        415  			MOVE.B	#1,-(SP)
+00008568  1F3C 0000                        416  			MOVE.B	#0,-(SP)
+0000856C  2F08                             417  			MOVE.L	A0,-(SP)
+0000856E  4EB9 0000843C                    418  			JSR		HANDLE
+00008574  5C4F                             419  			ADDQ	#6,SP
+00008576                                   420  
+00008576                                   421  * rilascio il lock
+00008576  13FC 0000 00008028               422  RLS_LK_B	MOVE.B	#0,LOCK
+0000857E                                   423  
+0000857E                                   424  * ripristino contesto
+0000857E  4CDF FFFF                        425  			MOVEM.L	(SP)+,D0-D7/A0-A7
+00008582  4E5E                             426  			UNLK	A6
+00008584  4E73                             427  OUT_B		RTE
+00008586                                   428  
+00008586                                   429  * mappare a $6c
+00008700                                   430  	ORG	$8700
+00008700  4AF9 00008028                    431  ISR_C		TAS		LOCK
+00008706  6600 0086                        432  			BNE		OUT_C
+0000870A                                   433  			*salvatggio contesto
+0000870A  4E56 0000                        434  			LINK	A6,#0
+0000870E  48E7 FFFF                        435  			MOVEM.L	D0-D7/A0-A7,-(SP)
+00008712                                   436  
+00008712                                   437  			* turn == 1?
+00008712  0C39 0001 00008029               438  			CMPI.B	#1,TURN
+0000871A  6700 002E                        439  			BEQ		WAKE_B
+0000871E                                   440  
+0000871E                                   441  			* turn == 0 ?
+0000871E  0C39 0000 00008029               442  C_TURN_0	CMPI.B	#0,TURN
+00008726  6600 000A                        443  			BNE		TURN_C
+0000872A                                   444  
+0000872A                                   445  			* prende il turno C
+0000872A  13FC 0002 00008029               446  			MOVE.B	#2,TURN
+00008732                                   447  
+00008732                                   448  			* eseguo la routine di C
+00008732  207C 00002004                    449  TURN_C		MOVE.L	#PIADA_2,A0
+00008738  1F3C 0002                        450  			MOVE.B	#2,-(SP)
+0000873C  1F3C 0000                        451  			MOVE.B	#0,-(SP)
+00008740  2F08                             452  			MOVE.L	A0,-(SP)
+00008742  4EB9 0000843C                    453  			JSR		HANDLE
+00008748  5C4F                             454  			ADDQ	#6,SP
+0000874A                                   455  
+0000874A                                   456  		* controllo se B è sospeso
+0000874A                                   457  		* leggo il registro CA7
+0000874A                                   458  		* Questo ciclo è necessario perchè C è meno prioritario di B
+0000874A                                   459  		* Può succedere che mentre si sta svegliando B nella procedura HANDLE
+0000874A                                   460  		* B sia così veloce da re-inviare un carattere, interrompere questa ISR,
+0000874A                                   461  		* trovare il LOCK occupato e sospendersi. Se non si ri-effettua il check dopo 
+0000874A                                   462  		* HANDLE il sistema si può trovare in DEADLOCK.
+0000874A                                   463  		* Questo consente di non fare nessuna assunzione sulla frequenza di invio di B e C.
+0000874A                                   464  		* Non è necessario farlo in B perchè, visto che C è meno prioritario di B, C
+0000874A                                   465  		* non interromperà mai B dopo aver letto C.
+0000874A                                   466  WAKE_B	
+0000874A  0C39 0001 00008029               467  		CMPI.B	#1,TURN
+00008752  6600 002C                        468  		BNE		RLS_LK_C
+00008756                                   469  
+00008756  207C 00002009                    470  		MOVE.L	#PIACA_1,A0
+0000875C  1010                             471  		MOVE.B	(A0),D0
+0000875E                                   472  
+0000875E                                   473  		* maschero il flag CRA7
+0000875E  0200 0080                        474  		ANDI.B	#$80,D0
+00008762                                   475  
+00008762  6700 001C                        476  		BEQ	RLS_LK_C
+00008766                                   477  
+00008766                                   478  		* risveglio B se necessario
+00008766  207C 00002008                    479  		MOVE.L	#PIADA_1,A0
+0000876C  1F3C 0001                        480  		MOVE.B	#1,-(SP)
+00008770  1F3C 0000                        481  		MOVE.B	#0,-(SP)
+00008774  2F08                             482  		MOVE.L	A0,-(SP)
+00008776  4EB9 0000843C                    483  		JSR		HANDLE
+0000877C  5C4F                             484  		ADDQ	#6,SP
+0000877E  60CA                             485  		BRA		WAKE_B
+00008780                                   486  
+00008780                                   487  * rilascio il lock
+00008780  13FC 0000 00008028               488  RLS_LK_C	MOVE.B	#0,LOCK
+00008788                                   489  
+00008788                                   490  * ripristino contesto
+00008788                                   491  CLN_C
+00008788  4CDF FFFF                        492  			MOVEM.L	(SP)+,D0-D7/A0-A7
+0000878C  4E5E                             493  			UNLK	A6
+0000878E  4E73                             494  OUT_C		RTE
+00008790                                   495  
+00008790                                   496  
+00008790                                   497  	END     MAIN
+
+No errors detected
+No warnings generated

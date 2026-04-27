@@ -1,0 +1,15 @@
+[submodule "high-performance/enclave-benchmark"]
+	path = high-performance/enclave-benchmark
+	url = https://github.com/alarmfox/enclave-benchmark.git
+[submodule "embedded-systems/sgx-analysis"]
+	path = embedded-systems/sgx-analysis
+	url = https://github.com/alarmfox/confidential-computing-tools
+[submodule "real-time-industrial-systems/rt-analysis"]
+	path = real-time-industrial-systems/rt-analysis
+	url = https://github.com/alarmfox/rt-analysis
+[submodule "web-and-real-time-communication-systems/rt-jam"]
+	path = web-and-real-time-communication-systems/rt-jam
+	url = https://github.com/alarmfox/rt-jam
+[submodule "software-architecture-design/game-repository"]
+	path = software-architecture-design/game-repository
+	url = https://github.com/alarmfox/game-repository

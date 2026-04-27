@@ -1,0 +1,191 @@
+		      ORG		    $8000
+START		  CLR.W		  D0
+		      LEA		    V1,A0
+		      LEA		    V2,A1
+		      LEA	      QUEUE,A2
+
+		      MOVE.L	  A2,-(SP)
+		      JSR		    INIT
+		      ADDA		  #4,SP
+			
+FOR		    CMP.W 	  #N,D0
+		      BGE		    LOOP
+		      MOVE.B	  (A0)+,D1
+		      MOVE.W	  (A1)+,D2
+		
+		      * stack
+		      MOVE.W	  D2,-(SP)
+		      MOVE.L  	A2,-(SP)
+		      ADDA		  #-2,SP
+	
+		      AND.B		  #1,D1
+		      BEQ		    POP
+					JSR       ENQUEUE
+
+		      MOVE.W	  (SP)+,D3
+		      ADDA		  #6,SP
+		
+		      BRA	      INCR
+
+POP		    JSR		    DEQUEUE
+		      MOVE.W	  (SP)+,D3
+		      ADDA		  #6,SP
+
+INCR	    ADD		    #1,D0
+		      BRA		    FOR
+
+LOOP		  JMP		    LOOP
+
+* INIT procedura per l'inizializzazione della coda: mette -1 in testa e coda e azzera gli elementi
+
+			    ORG			  $8200
+INIT			LINK			A6,#0
+
+		  	  MOVEM.L		D0/A0-A2,-(SP)
+			    MOVEA.L		8(A6),A0
+
+		  	  MOVEA.L		A0,A1			
+			    ADDA			#2,A1			* puntatore alla coda
+
+			    MOVEA.L		A0,A2			* puntatore alla coda
+			    ADDA			#4,A2			* puntatore ai dati
+
+			    MOVE.W		#-1,(A0)
+			    MOVE.W		#-1,(A1)
+			
+			    CLR.W			D0		
+init_loop	CMP.W		#N,D0
+			    BGE			INIT_CLR
+
+			    MOVE.W		#-1,(A2)+
+			    ADD.W			#1,D0
+			    BRA			init_loop
+
+INIT_CLR	MOVEM.L		(SP)+,D0/A0-A2
+			    UNLK			A6
+			    RTS
+
+* ENQUEUE  procedura per l'inserimento di un elemento all'interno della coda
+* ha una firma del tipo int enqueue(struct queue *q, unsigned char c)
+* ritorna 0 se non ci sono errori fine un valore negativo altrimenti (coda piena)
+			    ORG			$8400
+ENQUEUE		LINK			A6,#0
+			    MOVEM.L		D0-D3/A0-A2,-(SP)
+
+			    MOVEA.L		QUEUEOFF(A6),A0
+			    MOVE.W		ELEMOFF(A6),D1	* elemento da inserire
+			
+			    MOVEA.L		A0,A1			
+			    ADDA			#2,A1			* puntatore alla coda
+
+			    MOVEA.L		A0,A2			* puntatore alla coda
+			    ADDA			#4,A2			* puntatore ai dati
+								
+
+			    CLR.W			D0					* risultato
+			    CMP.W		  #-1,(A0)		* verifico che la coda sia vuota
+			    BEQ			  EMPTY
+		
+			    CMP.W		  #0,(A0)			* coda piena head == 0 && tail == n-1
+			    BNE			  INS
+			    MOVE.W		#N,D3
+			    ADD.W			#-1,D3
+			    CMP.W		  (A1),D3
+			    BNE			  INS
+			    MOVE.W		#-1,D0			* coda  vuota metto -1 nel risultato e ritorno
+			    BRA			  CLEANUP
+		
+			* devo fare l'incremento della coda: tail = (tail + 1) % N
+INS			  MOVE.W		(A1),D2
+			    ADD.W			#1,D2			
+			    DIVU  		#N,D2			  * divido il valore del puntatore alla coda per N (nei 16 bit MSB significativi di D2 viene messo il resto)
+       		CLR.W 		D2          * pulisco i bit meno significativi
+      		SWAP  		D2          * sposto il resto della divisione nei bit 15-0
+			    MOVE.W		D2,(A1)			* salvo il nuovo valore del puntatore alla coda
+			    MULU			#2,D2	
+			    ADDA			D2,A2			  * punto alla nuova cella di A2
+			    MOVE.W		D1,(A2)			* salvo il valore da inserire in coda
+			    BRA			  CLEANUP
+	
+EMPTY		  MOVE.W		#0,(A0)			* coda vuota metto head = tail = 0
+			    MOVE.W	  #0,(A1)
+			    MOVE.W  	D1,(A2)
+			    BRA			  CLEANUP
+
+CLEANUP		MOVE.W		D0,RETOFF(A6)
+			    MOVEM.L		(SP)+,D0-D3/A0-A2
+			    UNLK			A6
+			    RTS
+
+* DEQUEUE procedura per la rimozione di un elemento dalla testa della coda
+* ha una firma del tipo int dequeue(struct queue *q)
+* ritorna il valore rimosso
+			    ORG			$8600
+DEQUEUE 	LINK			A6,#0
+			    MOVEM.L		D0-D2/A0-A2,-(SP)
+
+			    MOVEA.L		QUEUEOFF(A6),A0
+						
+			    MOVEA.L		A0,A1			
+			    ADDA			#2,A1			  * A0+2 puntatore alla coda
+
+			    MOVEA.L		A0,A2	
+			    ADDA			#4,A2			  * A0+4 puntatore ai dati
+			
+			    CLR.W		  D0			    * risultato
+			    CMP.W		  #-1,(A0)		* controllo se la coda  vuota
+			    BEQ			  EMPTY1
+		
+			    MOVE.W		(A0),D2
+			    MULU			#2,D2
+			    ADDA			D2,A2			  * faccio puntare al valore in testa
+			
+          MOVE.W		(A2),D0		  * salvo il valore puntato da testa
+			    CMP.W		  (A1),D1		  * head == tail allora reset coda (ultimo elemento)
+		  	  BEQ			  RESET
+		
+			* incremento della testa classica con head = (head + 1)  % N
+			    MOVE.W		(A0),D1
+			    ADD.W			#1,D1
+			    DIVU  		#N,D1			  * divido il valore del puntatore alla coda per N (nei 16 bit MSB di D2 viene messo il resto)
+       		CLR.W 		D1          * pulisco i bit meno significativi
+      		SWAP  		D1          * sposto il resto della divisione nei bit 15-0
+			    MOVE.W		D1,(A0)			* salvo il nuovo valore del puntatore alla coda		
+			    BRA		  	CLEANUP1
+
+RESET			MOVE.W		#-1,(A0)
+			    MOVE.W		#-1,(A1)
+			    BRA			  CLEANUP1
+
+EMPTY1		MOVE.W		#-1,D0			* coda vuota: metto -1 nel risultato
+
+CLEANUP1	MOVE.W		D0,RETOFF(A6)
+			    MOVEM.L		(SP)+,D0-D2/A0-A2
+			    UNLK			A6
+			    RTS
+
+* AREA DATI 
+		      ORG	  $9400
+N		      EQU	  10
+RETOFF	  EQU	  8
+QUEUEOFF	EQU	  10
+ELEMOFF	  EQU	  14
+
+QUEUE	    DS.W	1		          * TESTA
+		      DS.W	1		          * CODA
+		      DS.W	N		          * DATA
+
+V1		    DC.B	1,1,0,1,1,0,1,1,0,0
+V2		    DC.W	31,255,0,0,127,31,15,0,7,0
+
+
+		      END	START
+
+***** STACK*****
+*	A6		      (0)
+* JSR_RET	    (4)
+*	RET		      (8)
+*	QUEUE_ADDR	(10)
+*	ELEM_ENQ	  (14)
+
+

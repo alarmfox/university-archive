@@ -1,0 +1,269 @@
+				ORG			$8000
+MAIN:		MOVE.L	#A,-(SP)
+				MOVE.W	#N,-(SP)
+				MOVE.W	#M,-(SP)
+				MOVE.L	#MAX_V,-(SP)
+				MOVE.L	#MAX_R,-(SP)
+* find_max(byte m[][], int n, int m, int &max, int &max_row)
+				JSR			FIND_MAX
+
+				ADDA		#16,SP
+				MOVE.L	#A,-(SP)
+				MOVE.W	#N,-(SP)
+				MOVE.W	#N,-(SP)
+				MOVE.L	#MIN_V,-(SP)
+				MOVE.L	#MIN_R,-(SP)
+
+* find_min(byte m[][], int n, int m, int &min, int &min_row)
+				JSR			FIND_MIN
+				ADDA		#16,SP
+		
+* swap se le righe sono divere
+				LEA			A,A0
+				LEA			A,A1
+				MOVE.W	MIN_R,D0
+
+* se le due righe sono uguali non faccio nulla
+				CMP.W		MAX_R,D0
+				BEQ			LOOP
+		
+* dimensione delle colonne sullo stack
+				MOVE.W	#M,-(SP)
+
+* accedo alla prima cella della riga MIN_R e metto l'indirizzo su SP
+				MULU		#M,D0
+				ADDA		D0,A0
+				MOVE.L	A0,-(SP)
+		
+* accedo alla prima cella della riga MAX_R e metto l'indirizzo su SP
+				MOVE.W	MAX_R,D0
+				MULU		#M,D0
+				ADDA		D0,A1
+				MOVE.L	A1,-(SP)
+
+* swap(byte r1[], byte r2[], int c)
+				JSR			SWAP
+				ADDA		#10,SP
+
+* conto i bit alti sulla diagonale se la matrice  quadrata
+				MOVE.W	#N,D0
+				CMP			#M,D0
+				BNE			LOOP
+
+				CLR.W		D0															*i
+				CLR.W		D1															*acc
+				LEA			A,A0
+				LEA			A,A1
+FOR:		CMP			#N,D0
+				BGE			SAVE
+
+* prendo l'elemento sulla diagonale
+				MOVE.W	D0,D2
+				MULU		#M,D2
+				ADD.W		D0,D2
+				ADDA		D2,A0
+		
+* parametri
+				ADDA		#-2,SP
+				MOVE.B	(A0),-(SP)
+				MOVE.B	#8,-(SP)
+				MOVE.L	#MASK,-(SP)
+				JSR			COUNT_FN
+*cleanup
+				ADDA		#6,SP
+				ADD.W		(SP)+,D1
+				MOVEA.L	A1,A0
+
+* incr
+				ADD			#1,D0
+				JMP			FOR
+
+
+SAVE:		MOVE.W	D1,SBIT_DIAG
+LOOP:		JMP			LOOP
+
+
+* funzione che conta i bit alti in un byte.
+* accetta in ingresso il byte da controllare e il vettore delle maschere 
+* dallo:	stack.
+				ORG			$8200
+COUNT_FN: LINK	A6,#0														* uso A6 come frame pointer
+				MOVEM.L	D0-D4,-(SP)											* salvo i registri sullo stack
+				MOVEM.L	A0,-(SP)
+				CLR.B		D0															* i cliclo
+				CLR.B		D1															* risultato
+				MOVE.L	MASKOFF(A6),A0
+				MOVE.B	WORDOFF(A6),D2
+				MOVE.B	DIMOFF(A6),D3
+BCNT_LOOP: CMP.B D3,D0
+				BGE			STOP
+				MOVE.B	(A0)+,D4												* copio la maschera da testare in D3
+				AND.B		D2,D4														* confronto la word con la maschera
+				BEQ.S		CONT														* la AND mette in D3 il risultato
+				ADD			#1,D1														* aggiungo 1 al risultato
+CONT:		ADD			#1,D0														* aggiungo 1 alla i
+				JMP			BCNT_LOOP
+STOP:		MOVE.W	D1,RESOFF(A6)
+				MOVEM.L	(SP)+,A0
+				MOVEM.L	(SP)+,D0-D4
+				UNLK		A6
+				RTS
+
+* funzione che trova il massimo della matrice e ritorna l'indice della riga
+* con i parametri (byte[][] a, int n, int m, int &v, int& r)
+				ORG			$8400 
+FIND_MAX: LINK	A6,#0
+				MOVEM.L	D0-D6,-(SP)
+				MOVEM.L	A0-A2,-(SP)
+
+* variabili di ingresso
+				MOVE.W	N_OFF(A6),D0
+				MOVE.W	M_OFF(A6),D1
+				MOVE.L	A_OFF(A6),A0
+				MOVE.L	VALUE_OFF(A6),A1
+				MOVE.L	ROW_OFF(A6),A2
+
+				CLR.W		D2															*i
+				CLR.B		D5															*max
+				CLR.B		D6															*row
+
+* primo for
+ILOOP:	CMP			D0,D2
+				BGE			MAX_FINE
+
+* secondo for
+				CLR.W		D3
+
+JLOOP:	CMP			D1,D3
+				BGE			IINCR
+		
+* carico il dato
+				MOVE.B	(A0)+,D4
+
+				CMP.B		D5,D4
+				BLS			JINCR
+				MOVE.B	D4,D5
+				MOVE.B	D2,D6	
+	
+
+JINCR:	ADD			#1,D3
+				JMP			JLOOP	
+IINCR:	ADD			#1,D2
+				JMP			ILOOP
+		
+MAX_FINE: MOVE.W D6,(A2)												*salvo il risultato nelle variabili
+				MOVE.B	D5,(A1)	
+				MOVEM.L	(SP)+,A0-A2
+				MOVEM.L	(SP)+,D0-D6
+				UNLK		A6
+				RTS
+
+
+* funzione che trova il minimo della matrice e ritorna l'indice della riga con i
+* parametri (byte[][] a, int n, int m, int &v, int& r)
+				ORG			$8600 
+FIND_MIN: LINK	A6,#0
+				MOVEM.L	D0-D6,-(SP)
+				MOVEM.L	A0-A2,-(SP)
+
+* variabili di ingresso
+				MOVE.W	N_OFF(A6),D0
+				MOVE.W	M_OFF(A6),D1
+				MOVE.L	A_OFF(A6),A0
+				MOVE.L	VALUE_OFF(A6),A1
+				MOVE.L	ROW_OFF(A6),A2
+
+				CLR.W		D2															*i
+				CLR.B		D5															*min
+				CLR.B		D6															*row
+
+* primo for
+MIN_ILOOP: CMP	D0,D2
+				BGE			MIN_FINE
+
+* secondo for
+				CLR.W		D3
+
+MIN_JLOOP: CMP	D1,D3
+				BGE			MIN_IINCR
+		
+* carico il dato
+				MOVE.B	(A0)+,D4
+
+				CMP.B		D5,D4
+				BHS			MIN_JINCR
+				MOVE.B	D4,D5
+				MOVE.B	D2,D6	
+	
+
+MIN_JINCR: ADD	#1,D3
+				JMP			MIN_JLOOP	
+MIN_IINCR: ADD	#1,D2
+				JMP			MIN_ILOOP
+		
+MIN_FINE: MOVE.W D6,(A2)												*salvo il risultato nelle variabili
+				MOVE.B	D5,(A1)	
+				MOVEM.L	(SP)+,A0-A2
+				MOVEM.L	(SP)+,D0-D6
+				UNLK		A6
+				RTS
+
+* procedura che scambia le righe della matrice passate in ingresso ha una firma 
+* del genere void(byte minR[], byte maxR[], int col)
+				ORG			$8800
+SWAP:		LINK		A6,#0
+
+				MOVEM.L	D0-D2,-(SP)
+				MOVEM.L	A0-A1,-(SP)
+		
+				MOVE.W	COL_OFF(A6),D0
+				MOVE.L	R1_OFF(A6),A0
+				MOVE.L	R2_OFF(A6),A1
+				CLR.W		D1
+		
+SW_LOOP: CMP.W	D0,D1
+				BGE			SW_STOP
+				MOVE.B	(A0),D2
+				MOVE.B	(A1),(A0)+
+				MOVE.B	D2,(A1)+
+
+				ADD			#1,D1
+				JMP			SW_LOOP
+SW_STOP: MOVEM.L (SP)+,A0-A1
+				MOVEM.L	(SP)+,D0-D2
+				UNLK		A6
+				RTS
+
+
+*area dati
+				ORG			$8100
+A:			DC.B		0,128,0,2,63,28,2,3,31,32,255,4,15,18,3,5
+MAX_R:	DS.W		1
+MIN_R:	DS.W		1
+MAX_V:	DS.B		1
+MIN_V:	DS.B		1
+N				EQU			4
+M				EQU			4
+MASK:		DC.B		$80,$40,$20,$10,$8,$4,$2,$1
+SBIT_DIAG: DS.W	1
+
+* offset procedura COUNT_FN
+RETOFF	EQU			4
+MASKOFF	EQU			8
+DIMOFF	EQU			12
+WORDOFF	EQU			13
+RESOFF	EQU			14
+
+* offset procedure FIND_MAX e FIND_MIN
+ROW_OFF	EQU			8
+VALUE_OFF EQU		12
+M_OFF		EQU			16
+N_OFF		EQU			18
+A_OFF		EQU			20
+
+* offset procedura SWAP
+R1_OFF	EQU			8
+R2_OFF	EQU			12
+COL_OFF	EQU			16
+
+				END			MAIN

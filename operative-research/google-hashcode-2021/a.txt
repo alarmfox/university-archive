@@ -1,0 +1,15 @@
+
+
+
+Per ogni servizio $S_j$, si calcola l'indice di utilità $P_{Sj}$ che indica quanto un servizio risulta popolare per le **feature** da implementare. In particolare, il valore di un servizio corrisponde a quanti clienti la sua implementazione soddisferebbe (per feature) diviso il numero di task diversi per avere la feature completa.
+\begin{equation}
+    P_{Sj} =  \sum_{i \in F}\frac{U_i x_{ij}}{|S^i_j|}
+\end{equation}
+con $x_{ij} \in \{0,1\}$ vale $1$ se la feature $i$ richiede il servizio $j$.
+
+## Idea 1
+Si potrebbe implementare un algoritmo dinamico che ogni volta che viene implementato un servizio privilegi gli altri per completare una feature
+## Idea 2
+A $P_{Sj}$ si potrebbe aggiungere un fattore di parallelismo
+## Idea 3
+Si vogliono privilegiare le feature i cui servizi richiesti risiedono sul minor numero di binary possibile in modo tale che un ingegnere può implementare la feature in un solo task.
