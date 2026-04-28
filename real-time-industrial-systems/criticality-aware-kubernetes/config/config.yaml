@@ -1,0 +1,15 @@
+kind: KubeletConfiguration
+apiVersion: kubelet.config.k8s.io/v1beta1
+enableServer: false
+failSwapOn: false
+cgroupDriver: cgroupfs 
+readOnlyPort: 10250
+podCIDR: 10.10.0.0/24
+serializeImagePulls: false
+authentication:
+ webhook:
+   enabled: false
+ anonymous:
+   enabled: true
+authorization:
+  mode: AlwaysAllow
