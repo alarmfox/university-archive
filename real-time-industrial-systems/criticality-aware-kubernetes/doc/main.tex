@@ -1,173 +1,209 @@
-\documentclass{article}
+\documentclass[11pt,a4paper]{article}
 
-\usepackage{tikz, hyperref, comment, amsmath, cleveref, forest, subcaption, listings, float}
-\usepackage[bottom]{footmisc}
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
 \usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{amsmath, amssymb, amsfonts}
+\usepackage{tikz}
+\usepackage{hyperref}
+\usepackage{comment}
+\usepackage{cleveref}
+\usepackage{forest}
+\usepackage{subcaption}
+\usepackage{listings}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{microtype}
+\usepackage[bottom]{footmisc}
+\usepackage{enumitem}
+\usepackage{titlesec}
 
+% --- Formatting ---
+\setlist[itemize]{noitemsep, topsep=0pt}
+\setlist[enumerate]{noitemsep, topsep=0pt}
+
+\titleformat{\section}{\large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{1em}{}
+
+% --- Cleveref Setup ---
 \crefformat{section}{\S#2#1#3}
 \crefformat{subsection}{\S#2#1#3}
 \crefformat{subsubsection}{\S#2#1#3}
-\crefformat{figure}{#2Figura~#1#3}
+\crefformat{figure}{Figure~#2#1#3}
+\crefformat{table}{Table~#2#1#3}
+\crefformat{equation}{Equation~(#2#1#3)}
 \crefformat{footnote}{#2\footnotemark[#1]#3}
-\crefformat{table}{#2Tabella~#1#3}
-\crefformat{equation}{#2Equazione~#1#3}
 
 \crefname{lstlisting}{listing}{listings}
 \Crefname{lstlisting}{Listing}{Listings}
 
+% --- Listings Setup ---
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
 
-\renewcommand{\contentsname}{Indice}
-\renewcommand{\refname}{Riferimenti}
-\renewcommand{\figurename}{Figura}
-\renewcommand{\tablename}{Tabella}
+\lstset{
+    language=Go,
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\small,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    frame=single
+}
 
-\lstset{language=Go,
-  basicstyle=\ttfamily\scriptsize,
-  keywordstyle=\color{blue}\ttfamily,
-  stringstyle=\color{red}\ttfamily,
-  commentstyle=\color{green}\ttfamily}
-\title{Criticality Aware Kubernetes}
-
-\author{Giuseppe Capasso}
+% --- Title Page Info ---
+\title{Criticality-Aware Kubernetes}
+\author{Giuseppe Capasso \and Emanuele d'Ajello}
+\date{Academic Year 2023/2024}
 
 \begin{document}
 
+% --- Title Page ---
 \begin{titlepage}
-  \thispagestyle{empty}
-  \raggedright % Allinea a sinistra
-
-  \begin{tikzpicture}
-    \node[anchor=south west] at (4,0) {\includegraphics[scale=0.75]{./figures/unina-logo-1.png}};
-    \node[anchor=south west] at (0,1.5) {\includegraphics{./figures/unina-logo-2.png}};
-    \node[anchor=south west] at (0,0.5) {\textsf{Scuola Politecnica e delle Scienze di Base}};
-    \node[anchor=south west] at (0,0) {\textsf{Corso di Laurea Magistrale in Ingegneria Informatica}};
-  \end{tikzpicture}
-
-  \vfill
-
-  {\textbf{\textit{\LARGE Criticality Aware Kubernetes}}}
-  \\[2cm]
-
-  {\textbf{\textit{\Large Elaborato di Real-Time Industrial Systems}}}
-  \\[1cm]
-  {\large Anno Accademico 2023/2024}
-
-  \vfill
-
-  \begin{table}[h]
-    \textbf{Giuseppe Capasso matr. M63001498}\\
-    \textbf{Emanuele d'Ajello matr. M63001435}\\
-  \end{table}
-
+    \centering
+    \vspace*{0.5cm}
+    
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \includegraphics[width=0.8\textwidth]{./figures/unina-logo-1.png}
+    \end{minipage}
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \includegraphics[width=0.8\textwidth]{./figures/unina-logo-2.png}
+    \end{minipage}
+    
+    \vspace{1cm}
+    {\large \textsf{Polytechnic School and Basic Sciences} \\ \textsf{Master's Degree in Computer Engineering} \par}
+    
+    \vfill
+    
+    {\Huge \bfseries Criticality-Aware Kubernetes \par}
+    \vspace{1.5cm}
+    {\Large \itshape Real-Time Industrial Systems Project \par}
+    \vspace{1cm}
+    {\large Academic Year 2023/2024 \par}
+    
+    \vfill
+    
+    \begin{flushleft}
+        \large
+        \textbf{Students:}\\
+        Giuseppe Capasso (ID M63001498)\\
+        Emanuele d'Ajello (ID M63001435)
+    \end{flushleft}
+    
 \end{titlepage}
 
-\thispagestyle{empty}
+\pagenumbering{roman}
 \tableofcontents
-
 \newpage
-\thispagestyle{empty}
-\section*{Introduzione}
-In un cluster Kubernetes, la Kubelet si occupa di gestire lo stato di un nodo worker
-scambiando informazioni con la parte di controllo.
-Lo scopo del progetto è quello di analizzare il funzionamento della Kubelet
-per verificare se questa può essere estesa per schedulare
-applicazioni \textit{soft real-time}. In particolare, l'analisi mira a ricavare i fattori principali che influenzano la latenza per lo startup dei pod in Linux.
+\pagenumbering{arabic}
+
+% --- Introduction ---
+\section*{Introduction}
+\addcontentsline{toc}{section}{Introduction}
+In a Kubernetes cluster, the Kubelet is responsible for managing the state of a worker node by exchanging information with the control plane. The goal of this project is to analyze the Kubelet's operation to determine if it can be extended to schedule \textit{soft real-time} applications. Specifically, the analysis aims to identify the main factors influencing pod startup latency in Linux environments.
 
 \clearpage
-\section{Kubenernetes}\label{section:kubernetes}
-Kubernetes\cite{KubernetesDocs} è un orchestratore di applicazioni containerizzate che automatizza le attività di \textit{deploy} e configurazione in ambito cloud. Un cluster Kubernetes è formato da:
+
+% --- Section 1: Kubernetes ---
+\section{Kubernetes}\label{section:kubernetes}
+Kubernetes~\cite{KubernetesDocs} is an orchestrator for containerized applications that automates deployment and configuration tasks in cloud environments. A Kubernetes cluster consists of:
 \begin{itemize}
-    \item \textbf{Data plane}: contiene i \textbf{worker node} che eseguono le applicazioni in \textit{pod}. Un pod è la più piccola unità installabile in Kubernetes. Il componente che si
-    occupa di gestire lo stato del nodo e le sue risorse è detto Kubelet che 
-    comunica con il \textit{control plane} per ricevere istruzioni e fornire informazioni sullo stato dei pod;
-    \item \textbf{Control plane}: è un gruppo di nodi che fornisce delle API all'utente e coordina l'intero cluster. Le richieste ricevute all'utente
-    vengono trasmesse ai nodi su cui sarà eseguita l'applicazione;
+    \item \textbf{Data plane}: Contains the \textbf{worker nodes} that execute applications within \textbf{pods}. A pod is the smallest deployable unit in Kubernetes. The component that manages the node's state and resources is the Kubelet, which communicates with the \textit{control plane} to receive instructions and provide status updates on the pods.
+    \item \textbf{Control plane}: A group of nodes that provide APIs to the user and coordinate the entire cluster. User requests are transmitted to the nodes where the application will be executed.
 \end{itemize}
 
-L'architettura di un cluster generico è mostrata in \cref{fig:kube-arch}.
-\begin{figure}[h]
+The architecture of a generic cluster is shown in \cref{fig:kube-arch}.
+\begin{figure}[htbp]
     \centering
-    \includegraphics[width=.9\textwidth]{figures/ch1/kubernetes_arch.png}
-    \caption{Architettura di un cluster Kubernetes}
+    \includegraphics[width=0.85\textwidth]{figures/ch1/kubernetes_arch.png}
+    \caption{Kubernetes Cluster Architecture}
     \label{fig:kube-arch}
 \end{figure}
 
-\subsection{Control plane}
-Il control plane si occupa di gestire il dataplane attraverso l'\textbf{API server} che si collega 
-con i worker nodes attraverso \textbf{gRPC}. Al suo interno, lo stato dei nodi viene aggiornato 
-con i messaggi comunicati dalla kubelet e memorizzati in \textbf{etcd}: un database chiave-valore distribuito. 
-Il control plane usa il \textbf{kube-scheduler} per selezionare il nodo più adatto al workload da installare. Tra i fattori tenuti in considerazione ci sono:
+\subsection{Control Plane}
+The control plane manages the data plane through the \textbf{API server}, which connects to the worker nodes via \textbf{gRPC}. Internally, the state of the nodes is updated with messages from the Kubelet and stored in \textbf{etcd}: a distributed key-value store. The control plane uses the \textbf{kube-scheduler} to select the most suitable node for the workload. Factors considered include:
 \begin{itemize}
-    \item Vincoli imposti dal workload: un'applicazione può decidere influire sulla scelta del worker node specificando sia vincoli sull'host che sulle risorse richieste;
-    \item Stato del cluster: lo scheduler cerca di bilanciare le risorse utilizzate dai nodi worker e non 
-    assegna pod ad un nodo non \textit{healthy};
+    \item \textbf{Workload constraints}: Applications can influence node selection by specifying host constraints and resource requirements.
+    \item \textbf{Cluster state}: The scheduler balances resource utilization across worker nodes and avoids assigning pods to unhealthy nodes.
 \end{itemize}
 
-\subsection{Data plane}
-Il data plane è formato da nodi worker che si occupano di eseguire i workload commissionati dal master sottoforma di 
-pod. Un pod è un gruppo di container che viene gestito in maniera atomica dai componenti del cluster. Ogni worker node ha due componenti principali:
+\subsection{Data Plane}
+The data plane consists of worker nodes that execute workloads commissioned by the master in the form of pods. A pod is a group of containers managed atomically. Each worker node has two main components:
 \begin{itemize}
-    \item \textbf{Kubelet}: agente che si interfaccia con il control plane, si occupa di gestire fisicamente le risorse dell'host e di interagire con il \textbf{CRI (Container Runtime Interface)} che astrae la tecnologia di creazione del container. Nel progetto tutti gli esperimenti usano container eseguiti attraverso \textbf{containerd};
-    \item \textbf{Kube-proxy}: componente che accetta il traffico di rete degli utenti reali;
+    \item \textbf{Kubelet}: An agent that interfaces with the control plane, manages host resources, and interacts with the \textbf{Container Runtime Interface (CRI)}, which abstracts the container creation technology. In this project, all experiments use containers executed through \textbf{containerd}.
+    \item \textbf{Kube-proxy}: A component that manages network traffic for the applications.
 \end{itemize}
 
-\subsubsection{Kubelet: ciclo di controllo}
-Il control plane di kubenetes si occupa di verificare continuamente lo stato del cluster affinchè sia
-quello desiderato dall'utente. Quando viene effettuata una modifica dall'esterno o si verifica un evento nel worker node, il control plane calcola le \textbf{mutazioni} da applicare allo stato corrente per raggiungere quello desiderato. Le mutazioni sono messaggi diretti alla kubelet che le traduce in 
-azioni sui pod.
+\subsubsection{Kubelet: Control Cycle}
+The Kubernetes control plane continuously monitors the cluster state to ensure it matches the user's desired state. When an external modification or a node event occurs, the control plane calculates the \textbf{mutations} needed to reach the target state. These mutations are sent to the Kubelet, which translates them into pod actions.
 
- La Kubelet funziona eseguendo un ciclo di sincronizzazione applicando aggiornamenti che arrivano da 3 canali (\cref{fig:worker-node}):
+The Kubelet operates by running a synchronization loop that processes updates from three channels (\cref{fig:worker-node}):
 \begin{itemize}
-    \item File di configurazione;
-    \item Richieste http;
-    \item API server (richieste dal control plane);
+    \item Configuration files;
+    \item HTTP requests;
+    \item API server (requests from the control plane).
 \end{itemize}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
     \centering
-    \includegraphics[width=.95\textwidth]{figures/ch1/kubelet_syncloop.png}
-    \caption{Struttura di un worker node in kubernetes}
+    \includegraphics[width=0.85\textwidth]{figures/ch1/kubelet_syncloop.png}
+    \caption{Worker Node Structure in Kubernetes}
     \label{fig:worker-node}
 \end{figure}
 
-Inoltre, periodicamente ogni secondo controlla che tutti i pod per assicurarsi che lo stato corrente corrisponda con quello desiderato (\cref{fig:syncloop}).
-Viene qui riportata la \textit{signature} del metodo che gestisce il ciclo dapprima descritto.
-\begin{verbatim}
-    func (kl *Kubelet) syncLoop(ctx context.Context, 
-            updates <-chan kubetypes.PodUpdate, 
-            handler SyncHandler) 
-\end{verbatim}
-Nel dettaglio i tre parametri d'ingresso sono:
+Additionally, the Kubelet performs periodic checks every second to ensure the current state matches the desired state (\cref{fig:syncloop}). The signature of the main synchronization method is shown below:
+
+\begin{lstlisting}[language=Go, frame=none, numbers=none, backgroundcolor=\color{white}]
+func (kl *Kubelet) syncLoop(ctx context.Context, 
+        updates <-chan kubetypes.PodUpdate, 
+        handler SyncHandler) 
+\end{lstlisting}
+
+The three input parameters are:
 \begin{itemize}
-    \item \begin{verbatim} type Context interface\end{verbatim} L'interface contiene una Deadline, un channel per la cancellazione, errori ed evenutali valori di gestione utente.
-    \item \begin{verbatim} type PodUpdate struct \end{verbatim} La struct contiene un vettore di pod da aggiornare, il tipo di operazione da effettuare ed il nome di tale update.
-    \item \begin{verbatim} type SyncHandler interface\end{verbatim} L'interface contiene dei metodi per gestire; l'eliminazione, la riconfigurazione, la podAddition ecc, ecc.
+    \item \lstinline[language=Go]{type Context interface}: Contains a Deadline, a cancellation channel, errors, and user-defined values.
+    \item \lstinline[language=Go]{type PodUpdate struct}: Contains a vector of pods to update, the operation type, and the update name.
+    \item \lstinline[language=Go]{type SyncHandler interface}: Defines methods for handling deletion, reconfiguration, pod addition, etc.
 \end{itemize}
-\begin{figure}[h]
+
+\begin{figure}[htbp]
     \centering
-    \includegraphics[width=.7\textwidth]{figures/ch1/kubelet.png}
-    \caption{Schema funzione syncLoop}
+    \includegraphics[width=0.6\textwidth]{figures/ch1/kubelet.png}
+    \caption{syncLoop Function Flowchart}
     \label{fig:syncloop}
 \end{figure}
 
-\clearpage
 \subsubsection{Kubelet in Linux}
-La kubelet controlla le risorse hardware attraverso i \textbf{cgroups}. Un cgroup è un meccanismo di isolamento che permette di limitare e controllare le risorse utilizzate da un gruppo di processi. La kubelet partiziona le risorse dell'host in cui si trova in $3$ gruppi:
+The Kubelet controls hardware resources using \textbf{cgroups}. A cgroup is an isolation mechanism that limits and monitors the resources used by a group of processes. The Kubelet partitions host resources into three groups:
 \begin{itemize}
-    \item \textbf{kubepods}: risorse dedicate ai pod. Un pod è l'unità minima schedulabile da kubernetes composta da un gruppo di container che condividono le stesse risorse;
-    \item \textbf{system-resources}: utilizzato per i processi che non fanno parte di kubernetes;
-    \item \textbf{kube-resources}: risorse allocate per tutti i processi collegati a kubernetes sull'host quali container runtime, la stessa kubelet ecc;
+    \item \textbf{kubepods}: Resources dedicated to pods.
+    \item \textbf{system-resources}: Used for processes not belonging to Kubernetes.
+    \item \textbf{kube-resources}: Resources allocated for Kubernetes-related processes on the host, such as the container runtime and the Kubelet itself.
 \end{itemize}
-A sua volta le risorse dedicate ai pod vengono raggruppate in $3$ classi di Quality of Service:
-\begin{itemize}
-    \item \textbf{Guaranteed}: un pod viene considerato \textit{guaranteed} se tutti i suoi container hanno richieste/limiti specificati sia per CPU che per memoria e sono uguali per ogni container;
-    \item \textbf{Burstable}: un pod viene considerato \textit{burstable} se almeno un container del pod ha una richiesta per una risorsa tra CPU e memoria;
-    \item \textbf{Best effort}: un pod viene considerato \textit{best effort} se nessun container presenta una richiesta per CPU e memoria;
-\end{itemize}
+Pod resources are further grouped into three Quality of Service (QoS) classes: \textbf{Guaranteed}, \textbf{Burstable}, and \textbf{Best Effort}.
 
+\begin{center}
 \begin{forest}
   for tree={
-    font=\ttfamily,
+    font=\ttfamily\small,
     grow'=0,
     child anchor=west,
     parent anchor=south,
@@ -202,26 +238,27 @@ A sua volta le risorse dedicate ai pod vengono raggruppate in $3$ classi di Qual
   [kube-resources/]
 ]
 \end{forest}
+\end{center}
 
-\subsection{Container in Linux} \label{section:linux_container}
-Un container è un'applicazione isolata che si basa sulla condivisione del kernel e per questo motivo è molto facile da gestire. Per garantire disaccoppiamento, la Kubelet non crea container interagendo direttamente con il Kernel, ma, come mostrato in \cref{fig:kubelet_2_containerd}, utilizza un'interfaccia chiamata \textbf{Container Runtime Interface (CRI)} implementata da uno specifico componente: \textbf{Container Runtime}.
+\subsection{Containers in Linux} \label{section:linux_container}
+A container is an isolated application based on kernel sharing, making it highly efficient to manage. To ensure decoupling, the Kubelet does not interact directly with the kernel to create containers. Instead, it uses the \textbf{Container Runtime Interface (CRI)}, as shown in \cref{fig:kubelet_2_containerd}.
 
-\begin{figure}[h]
+\begin{figure}[htbp]
     \centering
-    \includegraphics[width=.8\textwidth]{figures/ch1/containerdimg.png}
-    \caption{Architettura completa dell'interazione tra containerd e kubelet}
+    \includegraphics[width=0.75\textwidth]{figures/ch1/containerdimg.png}
+    \caption{Interaction Architecture between containerd and Kubelet}
     \label{fig:kubelet_2_containerd}
 \end{figure}
 
-In questo progetto, il container runtime utilizzato è \textbf{containerd}. In particolare, la kubelet utilizza un componente detto \textbf{cri-containerd} che si occupa di usare le API \textbf{gRPC} messe a disposizione da containerd. Si noti anche che, dalla \cref{fig:kubelet_2_containerd}, la gestione di un pod con $n$ container comporta effettivamente la creazione di $n+1$ container in quanto la kubelet necessita di un un container speciale detto \textbf{Sandbox} che utilizza l'immagine \textbf{pause}. Questa speciale applicazione è composta da codice \textit{assembly} e ha il compito di tenere attivo il \textbf{network namespace} del pod\cite{WhatIsPauseContainer}. I namespace in Linux vengono cancellati quando nessun processo ne fa parte e, pertanto, per evitare downtime quando un container viene eliminato è necessario avere quest'applicazione\cite{WhyPauseContainer}\cite{ManUnshare}.
+In this project, the container runtime is \textbf{containerd}. Specifically, the Kubelet uses a component called \textbf{cri-containerd} to interact with containerd via \textbf{gRPC} APIs. As shown in \cref{fig:kubelet_2_containerd}, managing a pod with $n$ containers involves creating $n+1$ containers because the Kubelet requires a special container called the \textbf{Sandbox}, which uses the \textbf{pause} image. This assembly-based application maintains the pod's \textbf{network namespace}~\cite{WhatIsPauseContainer}. Linux namespaces are deleted when no processes remain in them; thus, the pause container prevents downtime during container replacement~\cite{WhyPauseContainer, ManUnshare}.
 
-\paragraph{Contaienrd} Containerd\cite{Containerd} è un \textbf{high-level} container runtime scritto in Go che crea l'astrazione di container. Il suo compito principale è quello di gestire il ciclo di vita di un container comunicando con un \textbf{low-level} container runtime. Quest'ulteriore astrazione è stata realizzata per tenere separata la particolare implementazione del container dal suo utilizzo ed è possibile grazie allo standard \textbf{OCI}\cite{OpenContainerInitiative} che specifica il formato di un immagine. Containerd utilizza come default low-level runtime \textbf{runc} che si occupa di creare container in Linux.
+\paragraph{Containerd} Containerd~\cite{Containerd} is a high-level container runtime written in Go. It manages the container lifecycle by communicating with a low-level container runtime. This abstraction, based on the \textbf{OCI}~\cite{OpenContainerInitiative} standard, separates container implementation from usage. Containerd uses \textbf{runc} as its default low-level runtime.
 
-\paragraph{Runc} Runc si occupa di creare un container attraverso le system-call di Linux. In particolare, parte dalla creazione di un processo e lo configura in base al tipo di richiesta ricevuta attraverso i namespace con delle operazione di I/O (leggendo e scrivendo in dei file virtuali). Il flusso di creazione di un container prevede l'utilizzo di una doppia \textit{fork} (è necessario eseguire le system-call \textbf{clone} e \textbf{unshare}): la prima viene utilizzata per creare il processo container la seconda per assicurarsi che il container non venga eliminato se runc termina e viceversa (il container non deve diventare uno \textit{zombie} nel caso in cui runc termini).
+\paragraph{Runc} Runc creates containers using Linux system calls, configuring them through namespaces and virtual file I/O. The creation process involves a double \textit{fork} (using \textbf{clone} and \textbf{unshare}): the first creates the container process, while the second ensures the container is not terminated if runc exits, and vice versa.
 
-Di seguito, è riportato un esempio\cite{RuncContainerConfig} di configurazione in \textbf{Go} per la creazione di un container che utilizza le API di basso livello in \textbf{C}.
+Listing~\ref{lst:runc_config} shows an example of high-level container configuration in Go.
 
-\begin{lstlisting}[language=go, label=lst:runc_config, caption="Esempio di configurazione di alto livello di un container", captionpos="bottom"]
+\begin{lstlisting}[language=Go, label=lst:runc_config, caption={High-level Container Configuration Example}]
 config := &configs.Config{
 	Rootfs: "/your/path/to/rootfs",
 	Capabilities: &configs.Capabilities{
@@ -229,7 +266,6 @@ config := &configs.Config{
 			"CAP_KILL",
 			"CAP_AUDIT_WRITE",
 		},
-		// altre capabilities omesse...
 	},
 	Namespaces: configs.Namespaces([]configs.Namespace{
 		{Type: configs.NEWNS},
@@ -264,7 +300,6 @@ config := &configs.Config{
 			Device:      "proc",
 			Flags:       defaultMountFlags,
 		},
-		// altri mount points omessi
 	},
 	UIDMappings: []configs.IDMap{
 		{
@@ -297,438 +332,272 @@ config := &configs.Config{
 }
 \end{lstlisting}
 
-Di particolare interesse è la funzione \textbf{nsexec} che viene utilizzata proprio per creare un container. Dall'analisi del codice, emerge che le systemcall utilizzate per creare un container sono:
+The \textbf{nsexec} function is critical for container creation. Key system calls used include:
 \begin{itemize}
-    \item \textbf{clone()}: crea un nuovo processo. Si tratta di una versione a controllo più della \textbf{fork} in quanto l'utente può controllare i namespace nei quali viene messo il nuovo processo e il suo spazio di indirizzamento virtuale \cite{ManClone};
-    \item \textbf{unshare()}: consente al processo corrente di separare parte del suo contesto esecutivo\cite{ManUnshare};
-    \item \textbf{pivot\_root()}: cambia la cartella root per il processo chiamante;
-    \item \textbf{chdir()}: cambia la \textit{current working directory} del processo chiamante;
-    \item \textbf{close()}: chiude il \textit{file descriptor} passato in ingresso;
-    \item \textbf{setns()}: prende in ingresso un \textit{file descriptor} che punta ad un namespace. Associa il processo chiamante al namespace indicato\cite{ManSetns};
-    \item \textbf{mount()}: \textit{monta} il filesystem in ingresso sulla direzione specificata dal processo chiamante;
-    \item \textbf{chmod(), chown()}: configurano i permessi sui filesystem \textit{montati}.
-    \item \textbf{sethostname(), setdomainname()}: configura il nome host e il dominio per identificare il container sulla rete;
-    \item \textbf{setrlimit()}:  configura i limiti applicando la configurazione della richiesta, come mostrato nell'esempio \ref{lst:runc_config};
-    \item \textbf{execve()}: esegue il comando specificato dal processo;
+    \item \lstinline{clone()}: Creates a new process with controlled namespaces and address space~\cite{ManClone}.
+    \item \lstinline{unshare()}: Allows a process to disassociate parts of its execution context~\cite{ManUnshare}.
+    \item \lstinline{pivot_root()}: Changes the root directory for the calling process.
+    \item \lstinline{setns()}: Associates the calling process with a specified namespace~\cite{ManSetns}.
+    \item \lstinline{mount()}: Mounts a filesystem.
+    \item \lstinline{execve()}: Executes the specified command.
 \end{itemize}
 
-\clearpage
-\section{Analisi latenza per la creazione di un pod}
+\section{Pod Creation Latency Analysis}
 
-\subsection{Problema} Il problema che si vuole affrontare nel progetto è quello di proporre un limite superiore (anche teorico) al tempo di creazione e startup di un container in Kubernetes. In particolare, nel progetto ci si è focalizzati sulla latenza generata dalla kubelet (\cref{fig:pod_latency} sezione in verde) che dipende interamente dal nodo worker e dalla tecnologia con cui sono implementati i container.
+\subsection{Problem Statement}
+The objective is to propose an upper bound (potentially theoretical) for the creation and startup time of a Kubernetes container. The focus is on the Kubelet-generated latency (\cref{fig:pod_latency}, green section), which depends on the worker node and the container technology.
 
-\begin{figure}[h]
+\begin{figure}[htbp]
     \centering
-    \includegraphics[width=.7\textwidth]{figures/ch1/latency.png}
-    \caption{Schema temporale creazione di un pod}
+    \includegraphics[width=0.65\textwidth]{figures/ch1/latency.png}
+    \caption{Pod Creation Timing Diagram}
     \label{fig:pod_latency}
 \end{figure}
 
+\paragraph{Why is Kubernetes unsuitable for hard real-time tasks?} Kubernetes and containerd are written in Go~\cite{Golang}, a high-level, garbage-collected language. While the garbage collector can be disabled~\cite{GoGarbageCollector} and manual allocation performed via CGO, the Go runtime uses an \textbf{M:N fair scheduler}~\cite{GolangScheduler} with \textbf{work stealing}~\cite{GolangSchedulerDeepDive} and a $10ms$ time slice~\cite{GolangScheduler}. This makes Go inherently unsuitable for hard real-time applications.
 
-\paragraph{Perchè Kubernetes non è adatto a schedulare task hard real-time?} Kubernetes e containerd sono due applicazioni scritte Go\cite{Golang}. Go è un linguaggio di alto livello dotato di un \textbf{runtime} e \textbf{garbage collected}. Progettando accuratamente le risorse dell'applicazione è possibile disabilitare il garbage collector\cite{GoGarbageCollector} e procedere con un'allocazione manuale attraverso il \textbf{C-binding} messo a disposizione con \textbf{CGO}. Il runtime è dotato di uno scheduler \textbf{M:N} fair\cite{GolangScheduler} che si occupa di gestire $m$ go-routines su $n$ processi creati in base al numero di core. Per bilanciare il carico sui processori, viene utilizzata la tecnica del \textbf{work stealing}\cite{GolangSchedulerDeepDive} con un time slice di $10ms$\cite{GolangScheduler}. Questa implementazione rende Go non adatto per applicazione \textbf{hard real-time}.
-
-\begin{figure}[h]
+\begin{figure}[htbp]
     \centering
-    \includegraphics[width=.7\textwidth]{figures/ch1/golang_scheduler.png}
-    \caption{Schema della schedulazione delle goroutine}
+    \includegraphics[width=0.65\textwidth]{figures/ch1/golang_scheduler.png}
+    \caption{Goroutine Scheduling Overview}
     \label{fig:golang_scheduler}
 \end{figure}
 
-\subsection{Ambiente di test}
-L'analisi della latenza per la creazione di un pod è stata realizzata creando un workload formato da un pod contente un solo container \textbf{nginx}. I fattori individuati per lo studio sono riportati in \cref{tab:factor} in cui l'utilizzo di \textbf{SCHED\_FIFO} e il fattore \textbf{priority} fanno riferimento ai processi \textbf{containerd} e \textbf{kubelet}; mentre per \textbf{cgroup} si intende l'esecuzione di entrambi i programmi all'interno dello stesso cgroup.
+\subsection{Test Environment}
+Latency analysis was conducted using a single-container \textbf{nginx} pod. The study factors are listed in \cref{tab:factor}. \textbf{SCHED\_FIFO} and \textbf{priority} refer to the containerd and Kubelet processes, while \textbf{cgroup} refers to running both in the same cgroup. 20 samples were collected for each experiment.
 
-Lo scopo dell'analisi è quello di scoprire quali sono i fattori che influenzano la latenza dello \textbf{startup} di un pod. Per ogni esperimento descritto di seguito sono stati prelevati $20$ campioni.
-
-\begin{table}[h]
+\begin{table}[htbp]
 \centering
-    \begin{tabular}{|l|p{0.5\linewidth}|}
-    \hline
-    \multicolumn{1}{|c|}{\textbf{Fattore}} &
-    \multicolumn{1}{c|}{\textbf{Valori}}\tabularnewline \hline
-
-\# pod & $5, 10, 20, 30, 40, 50$\tabularnewline \hline
-
-\# cpu & $2, 4, 8$\tabularnewline \hline
-
-scheduler & sched-fifo, sched-other  \tabularnewline \hline
-
-\# cpu-isolated & true, false  \tabularnewline \hline
-priority & $90, 99$  \tabularnewline \hline
-cgroup & $0, 1, 2$  \tabularnewline \hline
+\small
+    \begin{tabular}{ll}
+    \toprule
+    \textbf{Factor} & \textbf{Values} \\ \midrule
+    \# pods & $5, 10, 20, 30, 40, 50$ \\
+    \# CPUs & $2, 4, 8$ \\
+    Scheduler & SCHED\_FIFO, SCHED\_OTHER \\
+    \# Isolated CPUs & True, False \\
+    Priority & $90, 99$ \\
+    Cgroup & $0, 1, 2$ \\ \bottomrule
 \end{tabular}
-\caption{Fattori presi in considerazione per l'analisi della latenza}
+\caption{Factors Considered in Latency Analysis}
 \label{tab:factor}
 \end{table}
 
-\paragraph{Assunzioni} Per rendere l'analisi focalizzata sulle interazioni tra kubelet e sistema operativo sono state fatte le seguenti assunzioni:
+\paragraph{Assumptions} To focus on Kubelet-OS interactions:
 \begin{itemize}
-    \item immagine del container presente sull'host: fissato il tag dell'immagine containerd non effettua una richiesta ad un \textit{registry} online se sa che ha già in locale l'immagine desiderata. Questo consente di rendere i dati meno aleatori;
-    \item il workload principale del worker node dipende solamente dai pod presenti: si assume che l'unico utilizzatore del worker node è la kubelet;
+    \item \textbf{Local image availability}: Container images are pre-pulled to eliminate network variability.
+    \item \textbf{Isolated workload}: The Kubelet is assumed to be the primary user of the worker node.
 \end{itemize}
 
-\paragraph{Setup} Le specifiche della macchina su cui sono stati effettuati i test sono 
-in \cref{tab:test_machine}.
+\paragraph{Setup} The test machine specifications are listed in \cref{tab:test_machine}.
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering
-    \begin{tabular}{|l|p{0.6\linewidth}|}
-    \hline
-    \multicolumn{1}{|c|}{\textbf{Caratteristiche}} &
-    \multicolumn{1}{c|}{\textbf{Test machine}}\tabularnewline \hline
-
-CPU & AMD Ryzen 7, 5700U 4.3GHz\tabularnewline \hline
-
-RAM & DDR4 16GB, 3200 MHz SODIMM  \tabularnewline \hline
-
-OS & Linux taurino 6.9.2-artix1-1 \#1 SMP PREEMPT\_DYNAMIC  \tabularnewline \hline
+\small
+    \begin{tabular}{ll}
+    \toprule
+    \textbf{Feature} & \textbf{Test Machine} \\ \midrule
+    CPU & AMD Ryzen 7, 5700U 4.3GHz \\
+    RAM & DDR4 16GB, 3200 MHz SODIMM \\
+    OS & Linux taurino 6.9.2-artix1-1 \#1 SMP PREEMPT\_DYNAMIC \\ \bottomrule
 \end{tabular}
-\caption{Caratteristiche macchina di test}
+\caption{Test Machine Characteristics}
 \label{tab:test_machine}
 \end{table}
 
-In accordo con la \cref{fig:kube-arch}, è stato creato un cluster Kubernetes in locale sfruttando\cite{Medium}.
+A local Kubernetes cluster was created as described in~\cite{Medium}. The etcd server was run in standalone mode, followed by the kube-controller-manager (with `kube-api-qps` set to -1 to disable rate limiting) and the API server. Containerd was configured with `systemdCgroup=false`. Finally, the Kubelet was started with JSON logging.
 
-Posizionandosi nella cartella \textit{root} del progetto, si esegue il server etcd in modalità standalone con configurazione default:
-\begin{verbatim}
-$ ./etcd/etcd-v3.5.13-linux-amd64/etcd
-\end{verbatim}
+\paragraph{Metrics} Metrics were extracted from Kubelet logs using the \textbf{podStartE2EDuration} field, which measures end-to-end latency, including Sandbox creation.
 
-Al kube controller manager viene dato il file della kubelet per registrarla come membro del \textit{data plane}. Il parametro \textit{kube-api-qps} è collegato al rate-limiter della kubelet. Infatti, quando si vogliono creare più repliche dello stesso container è possibile arrivare ad attivare il limiter ottenendo misure falsate. Il kube-api server si registra presso il cluster etcd e configura l'autenticazione per la kubelet che sarà inizializzata in seguito.
+\subsection{Results}\label{section:results}
+Startup time distributions were analyzed using violin and box plots. Since the distributions are non-normal, mean values (\cref{fig:average}) are insufficient as descriptive statistics. Consequently, Extreme Value Theory (EVT)~\cite{Evt} was used to analyze tail behavior.
 
-\begin{verbatim}
-$ kube-controller-manager --kubeconfig=config/kubelet.kubeconfig --kube-api-qps -1
-\end{verbatim}
-
-Creato un token per l'autenticazione della kubelet, è stato eseguito l'API server.
-\begin{verbatim}
-$ kube-apiserver --etcd-servers=http://127.0.0.1:2379 \
-   --service-cluster-ip-range=10.0.0.0/16 \
-   --service-account-issuer=https://kubernetes.default.svc.cluster.local \
-   --service-account-signing-key-file=config/certs/service-account-key.pem \
-   --service-account-key-file=config/certs/service-account-pub.pem \
-   --token-auth-file=config/token_auth_file   
-\end{verbatim}
-
-Per la creazione di del nodo worker, è stato eseguito containerd nel cui file di configurazione si indica la creazione di container con \textbf{runc}, la configurazione \textit{cni} e
-\textbf{systemdCgroup=false} in quanto non supportato dalla distribuzione corrente.
-\begin{verbatim}
-$ containerd -c config/containerd_config.toml
-\end{verbatim}
-
-Infine, è stata eseguita la kubelet:
-
-\begin{verbatim}
-$ kubelet --config config/config.yaml --logging-format=json \
-  --container-runtime-endpoint=unix:///run/containerd/containerd.sock \
-  --kubeconfig config/kubelet.kubeconfig
-\end{verbatim}
-
-\paragraph{Metriche} Le metriche sono state raccolte dai log della kubelet. Per ogni pod creato, la kubelet emette un log come quello di seguito dal quale è stato estratto il valore del campo \textbf{podStartE2EDuration}. Questa metrica è una misura \textbf{end-to-end} relativa al pod e include anche la creazione del container \textbf{Sandbox} (se necessaria) come spiegato in \cref{section:linux_container}.
-\begin{verbatim}
-{
-    "ts":1714649844171.5625,
-    "caller":"util/pod_startup_latency_tracker.go:104",
-    "msg":"Observed pod startup duration",
-    "v":0,
-    "pod":{
-        "name":"testdeployment74bd77df64-7g7vx",
-        "namespace":"default"
-        }, 
-    "podStartSLOduration":4.17153093,
-    "podStartE2EDuration":"4.17153093s", 
-    "podCreationTimestamp":1714649844171.576,
-    "firstStartedPulling":1714649844171.5762,
-    "lastFinishedPulling":1714649844171.5764,
-    "observedRunningTime":1714649844171.577,
-    "watchObservedRunningTime":1714649844171.577
-}
-\end{verbatim}
-
-\paragraph{Applicazione del workload} Il workload è stato applicato attraverso un \textbf{deployment} kubernetes con il comando:
-\begin{verbatim}
-$ kubectl create deployment <deployment-name> \
-    --image <image-name>:<tag> \ 
-    --replicas <number-of-pods>
-\end{verbatim}
-
-\textbf{Kubectl} è un programma CLI che consente di interagire con un cluster kubernetes attraverso un file di configurazione. Quando si crea un deployment, viene contattato il \textbf{control plane} che si preoccupa di eseguire la richiesta interagendo con le kubelet dei \textbf{worker node}.
-
-\subsection{Risultati}\label{section:results}
-Le analisi principali sono state effettuate prendendo in esecuzione le distribuzioni dei tempi di startup del pod creando dei violin plot e dei box plot. Dalle figure mostrate di seguito, si vede subito che le distribuzioni ottenute non sono normali e pertanto, non può essere scelta la media come statistica descrittiva (riportata per completezza in \cref{fig:average}). 
-
-Per questo motivo, successivamente è stato fatto un confronto delle distribuzioni ottenute con quella dei valori estremi, sfruttando i risultati ottenuti con la \textbf{Extreme Value Theory}\cite{Evt}.
-
-\begin{figure}[h]
+\begin{figure}[htbp]
     \centering
-    \includegraphics[width=\textwidth]{figures/ch2/results/average.pdf}
-    \caption{Valori medi per tempo startup di startup per $n$ pod}
+    \includegraphics[width=0.9\textwidth]{figures/ch2/results/average.pdf}
+    \caption{Average Pod Startup Times for $n$ Pods}
     \label{fig:average}
 \end{figure}
 
-Osservando i grafici riportati di seguito, si può affermare che il fattore che influenza per la maggior parte il tempo startup dei pod è lo \textbf{scheduler} del sistema operativo.
+The operating system \textbf{scheduler} is the most significant factor. \cref{fig:fifo-vs-nofifo} shows that \textbf{SCHED\_FIFO} drastically reduces latency compared to \textbf{SCHED\_OTHER}, which exhibits a wider interquartile range.
 
-In \cref{fig:fifo-vs-nofifo}, è mostrato il fatto che l'utilizzo di \textbf{sched-fifo} ha un impatto significativo rispetto agli altri fattori. Infatti, in \cref{fig:sched-other-box} il range inter-quartile è più ampio.
-
-\begin{figure}[h]
+\begin{figure}[htbp]
     \centering
-    \begin{subfigure}{0.5\textwidth}
-        \includegraphics[width=0.95\linewidth]{figures/ch2/results/cgroup-fifo-k90-c99.box.pdf}
-        \caption{Sched fifo kubelet priorità $90$}
-    \end{subfigure}\hfil
-    \begin{subfigure}{0.5\textwidth}
-        \includegraphics[width=0.95\linewidth]{figures/ch2/results/cgroup-nort.box.pdf}
-        \label{fig:sched-other-box}
-        \caption{Sched other senza cgroup}
+    \begin{subfigure}{0.48\textwidth}
+        \includegraphics[width=\linewidth]{figures/ch2/results/cgroup-fifo-k90-c99.box.pdf}
+        \caption{SCHED\_FIFO (Priority 90)}
+    \end{subfigure}\hfill
+    \begin{subfigure}{0.48\textwidth}
+        \includegraphics[width=\linewidth]{figures/ch2/results/cgroup-nort.box.pdf}
+        \caption{SCHED\_OTHER (No cgroup)}
     \end{subfigure} \\
-    \begin{subfigure}{0.5\textwidth}
-        \includegraphics[width=0.95\linewidth]{figures/ch2/results/nocgroup-4cpu-fifo-k99-c99.box.pdf}
-        \caption{Sched fifo senza cgroup con $4$ cpu}
-    \end{subfigure}\hfil
-    \begin{subfigure}{0.5\textwidth}
-        \includegraphics[width=0.95\linewidth]{figures/ch2/results/2cgroup-4cpu-fifo-k99-c99.box.pdf}
-        \caption{sched fifo con $4$ cpu e due cgroup}
+    \begin{subfigure}{0.48\textwidth}
+        \includegraphics[width=\linewidth]{figures/ch2/results/nocgroup-4cpu-fifo-k99-c99.box.pdf}
+        \caption{SCHED\_FIFO (4 CPUs, No cgroup)}
+    \end{subfigure}\hfill
+    \begin{subfigure}{0.48\textwidth}
+        \includegraphics[width=\linewidth]{figures/ch2/results/2cgroup-4cpu-fifo-k99-c99.box.pdf}
+        \caption{SCHED\_FIFO (4 CPUs, 2 cgroups)}
     \end{subfigure}
-    \caption{Risultati con diverse varianti dei fattori cgroup, scheduler}
+    \caption{Latency Results for Various Cgroup and Scheduler Configurations}
     \label{fig:fifo-vs-nofifo}
 \end{figure}
 
-In \cref{fig:fifo-vs-nofifo-violin}, è  riportato il violin plot corrispondente agli esperimenti in \cref{fig:fifo-vs-nofifo} in cui si può notare che, nel caso di \textbf{sched-other}, i valori tendono ad accumularsi verso il valore massimo, mentre in \cref{fig:sched-fifo-kubelet} verso il valore minimo con una varianza minore.
+Violin plots (\cref{fig:fifo-vs-nofifo-violin}) confirm that SCHED\_OTHER values cluster toward the maximum, while SCHED\_FIFO values cluster toward the minimum with lower variance.
 
-\begin{figure}[h]
+\begin{figure}[htbp]
     \centering
-    \begin{subfigure}{0.5\textwidth}
-        \includegraphics[width=0.95\linewidth]{figures/ch2/results/cgroup-fifo-k90-c99.violin.pdf}
-        \label{fig:sched-fifo-kubelet}
-        \caption{Sched fifo kubelet priorità $90$}
-    \end{subfigure}\hfil
-    \begin{subfigure}{0.5\textwidth}
-        \includegraphics[width=0.95\linewidth]{figures/ch2/results/cgroup-nort.violin.pdf}
-        \caption{Sched other senza cgroup}
+    \begin{subfigure}{0.48\textwidth}
+        \includegraphics[width=\linewidth]{figures/ch2/results/cgroup-fifo-k90-c99.violin.pdf}
+        \caption{SCHED\_FIFO (Priority 90)}
+    \end{subfigure}\hfill
+    \begin{subfigure}{0.48\textwidth}
+        \includegraphics[width=\linewidth]{figures/ch2/results/cgroup-nort.violin.pdf}
+        \caption{SCHED\_OTHER (No cgroup)}
     \end{subfigure} \\
-    \begin{subfigure}{0.5\textwidth}
-        \includegraphics[width=0.95\linewidth]{figures/ch2/results/nocgroup-4cpu-fifo-k99-c99.violin.pdf}
-        \caption{Sched fifo senza cgroup con $4$ cpu}
-    \end{subfigure}\hfil
-    \begin{subfigure}{0.5\textwidth}
-        \includegraphics[width=0.95\linewidth]{figures/ch2/results/2cgroup-4cpu-fifo-k99-c99.violin.pdf}
-        \caption{sched fifo con $4$ cpu e due cgroup}
+    \begin{subfigure}{0.48\textwidth}
+        \includegraphics[width=\linewidth]{figures/ch2/results/nocgroup-4cpu-fifo-k99-c99.violin.pdf}
+        \caption{SCHED\_FIFO (4 CPUs, No cgroup)}
+    \end{subfigure}\hfill
+    \begin{subfigure}{0.48\textwidth}
+        \includegraphics[width=\linewidth]{figures/ch2/results/2cgroup-4cpu-fifo-k99-c99.violin.pdf}
+        \caption{SCHED\_FIFO (4 CPUs, 2 cgroups)}
     \end{subfigure}
-    \caption{Risultati con diverse varianti dei fattori cgroup, scheduler}
+    \caption{Violin Plots for Cgroup and Scheduler Variants}
     \label{fig:fifo-vs-nofifo-violin}
 \end{figure}
 
-Un risultato interessante si può ottenere osservando l'andamento del boxplot utilizzando uno scheduler real-time facendo variare il numero di cpu utilizzate. In \cref{fig:fifo-nocgroup-box}, è mostrato l'andamento da $4$ a $8$ CPU senza cgroup; mentre in \cref{fig:fifo-2cgroup-box} è sono stati isolati i processi containerd e kubelet in due cgroup separati. La comparazione tra le due figure indica che non c'è un sostanziale vantaggio nell'utilizzo dei cgroup per gestire in maniera separata i due processi.
+Increasing CPU count with real-time scheduling shows limited benefit from cgroup isolation (\cref{fig:fifo-nocgroup-box}). However, exclusive CPU allocation via `isolcpus`~\cite{IsolCPU} yields excellent results by eliminating OS housekeeping overhead (\cref{fig:fifo-isolcpus}).
 
-\begin{figure}[h]
+\begin{figure}[htbp]
     \centering
-    \begin{subfigure}{0.5\textwidth}
-        \includegraphics[width=0.95\linewidth]{figures/ch2/results/nocgroup-4cpu-fifo-k99-c99.box.pdf}
-    \end{subfigure}\hfil
-    \begin{subfigure}{0.5\textwidth}
-        \includegraphics[width=0.95\linewidth]{figures/ch2/results/nocgroup-8cpu-fifo-k99-c99.box.pdf}
+    \begin{subfigure}{0.48\textwidth}
+        \includegraphics[width=\linewidth]{figures/ch2/results/nocgroup-4cpu-fifo-k99-c99.box.pdf}
+    \end{subfigure}\hfill
+    \begin{subfigure}{0.48\textwidth}
+        \includegraphics[width=\linewidth]{figures/ch2/results/nocgroup-8cpu-fifo-k99-c99.box.pdf}
     \end{subfigure}\\
-    \begin{subfigure}{0.5\textwidth}
-        \includegraphics[width=0.95\linewidth]{figures/ch2/results/nocgroup-4cpu-fifo-k99-c99.violin.pdf}
-        \caption{Box plot e violin plot di sched fifo con $4$ CPU}
-    \end{subfigure}\hfil
-    \begin{subfigure}{0.5\textwidth}
-        \includegraphics[width=0.95\linewidth]{figures/ch2/results/nocgroup-8cpu-fifo-k99-c99.violin.pdf}
-        \caption{Box plot e violin plot di sched fifo con $8$ CPU}
+    \begin{subfigure}{0.48\textwidth}
+        \includegraphics[width=\linewidth]{figures/ch2/results/nocgroup-4cpu-fifo-k99-c99.violin.pdf}
+        \caption{SCHED\_FIFO (4 CPUs)}
+    \end{subfigure}\hfill
+    \begin{subfigure}{0.48\textwidth}
+        \includegraphics[width=\linewidth]{figures/ch2/results/nocgroup-8cpu-fifo-k99-c99.violin.pdf}
+        \caption{SCHED\_FIFO (8 CPUs)}
     \end{subfigure}
-    \caption{Andamento startup con sched-fifo al variare del numero di cpu senza cgroup}
+    \caption{Startup Trends with SCHED\_FIFO and Varying CPU Counts (No Cgroup)}
     \label{fig:fifo-nocgroup-box}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[htbp]
     \centering
-    \begin{subfigure}{0.5\textwidth}
-        \includegraphics[width=0.95\linewidth]{figures/ch2/results/nocgroup-4cpu-fifo-k99-c99.box.pdf}
-    \end{subfigure}\hfil
-    \begin{subfigure}{0.5\textwidth}
-        \includegraphics[width=0.95\linewidth]{figures/ch2/results/nocgroup-8cpu-fifo-k99-c99.box.pdf}
+    \begin{subfigure}{0.48\textwidth}
+        \includegraphics[width=\linewidth]{figures/ch2/results/nocgroup-2-isolcpus-fifo-k99-c99.violin.pdf}
+    \end{subfigure}\hfill
+    \begin{subfigure}{0.48\textwidth}
+        \includegraphics[width=\linewidth]{figures/ch2/results/nocgroup-2-isolcpus-fifo-k99-c99.box.pdf}
     \end{subfigure}
-    \begin{subfigure}{0.5\textwidth}
-        \includegraphics[width=0.95\linewidth]{figures/ch2/results/nocgroup-4cpu-fifo-k99-c99.violin.pdf}
-        \caption{Box plot e violin plot di sched fifo con $8$ CPU}
-    \end{subfigure}\hfil
-    \begin{subfigure}{0.5\textwidth}
-        \includegraphics[width=0.95\linewidth]{figures/ch2/results/nocgroup-8cpu-fifo-k99-c99.violin.pdf}
-        \caption{Box plot e violin plot di sched fifo con $8$ CPU}
-    \end{subfigure}
-    \caption{Andamento startup con sched-fifo al variare del numero di cpu con containerd e  cgroup}
-    \label{fig:fifo-2cgroup-box}
-\end{figure}
-
-Infine, è stato effettuato un esperimento fornendo in esclusiva $2$ cpu alla kubelet e containerd escludendole dallo scheduler SMP usate dal sistema operativo attraverso l'opzione di boot \textbf{isolcpus}\cite{IsolCPU}. I risultati sono riportati in \cref{fig:fifo-isolcpus}. Anche avento a disposizione due CPU, si ottengono ottimi risultati in quanto le CPU non vengono utilizzate dal sistema operativo per le operazioni di \textbf{housekeeping}.
-
-\begin{figure}[h]
-    \centering
-    \begin{subfigure}{0.5\textwidth}
-        \includegraphics[width=0.95\linewidth]{figures/ch2/results/nocgroup-2-isolcpus-fifo-k99-c99.violin.pdf}
-    \end{subfigure}\hfil
-    \begin{subfigure}{0.5\textwidth}
-        \includegraphics[width=0.95\linewidth]{figures/ch2/results/nocgroup-2-isolcpus-fifo-k99-c99.box.pdf}
-    \end{subfigure}
-    \caption{Andamento startup con CPU isolate}
+    \caption{Startup Trends with Isolated CPUs}
     \label{fig:fifo-isolcpus}
 \end{figure}
-\clearpage
 
-\subsubsection{Extreme value analysis su tempo di creazione di un pod end-to-end}
-La Extreme Value Theory\cite{Evt} si occupa di stimare un WCET probabilistico analizzando le code delle distribuzioni ed è stata utilizzata perché:
-\begin{itemize}
-    \item Non assume che le distribuzioni siano normali;
-    \item Si concentra su eventi critici;
-\end{itemize}
-Per essere applicata, questa teoria ha bisogno di $3$ ulteriori ipotesi sulle distribuzioni:
-\begin{itemize}
-    \item \textbf{Stazionarietà}: Un esecuzione piatta dei task con varianza costante, non ci sono task che cambiano drasticamente i loro tempi di esecuzione;
-    \item \textbf{Short-Range independence}: Supponiamo di non avere tempi di accesso dipendenti dalla cache;
-    \item \textbf{Long-Range independence}: L'esecuzione dei task non dipendono dal test specifico;
-\end{itemize}
-
-Sulle ipotesi, la EVT afferma che la distribuzione creata a partire dal valore massimo converge alla \textbf{Generilized Extreme Distribution (GEV)} \cref{eq:gev} che può avere $3$ forme in base al parametro $\xi$:
-\begin{itemize}
-    \item ($\xi = 0$): distribuzione di Gumbel;
-    \item ($\xi > 0$): distribuzione di Frechet;
-    \item ($\xi < 0$): distribuzione di Weibull;
-\end{itemize}
+\subsubsection{Extreme Value Analysis of End-to-End Pod Creation Time}
+EVT~\cite{Evt} estimates probabilistic Worst-Case Execution Time (WCET) by focusing on tail events. It requires three hypotheses: \textbf{stationarity}, \textbf{short-range independence}, and \textbf{long-range independence}. Converging maxima follow the \textbf{Generalized Extreme Value (GEV)} distribution (\cref{eq:gev}).
 
 \begin{equation}
-    F(x) = \exp{\big(-\big(1 + \xi \frac{x-\mu}{\sigma}\big)^{-\frac{1}{\xi}}}\big)
+    F(x) = \exp{\left(-\left(1 + \xi \frac{x-\mu}{\sigma}\right)^{-\frac{1}{\xi}}\right)}
     \label{eq:gev}
 \end{equation}
 
-In accordo con quanto detto in \cref{section:results}, i fit più interessanti (riportati in \cref{tab:fit_data}, grafici $d, e, g$ della figura \cref{fig:qqplot-gev}) risultano essere quelli in cui viene utilizzato lo scheduler FIFO. Nei casi con fit migliore $\xi < 0$, quindi ci si trova in presenza di una distribuzione di \textbf{Weibull} già utilizzata per gli studi di \textit{reliability} e per modellare il \textbf{Mean Time to Failure (MTTF)} in sistemi critici\cite{WeibullUses}. 
+SCHED\_FIFO experiments provided the best fits (\cref{tab:fit_data}), often resulting in a \textbf{Weibull} distribution ($\xi < 0$), commonly used for reliability modeling~\cite{WeibullUses}.
 
-\begin{table}[h]
+\begin{table}[htbp]
 \centering
-    \begin{tabular}{|l|p{0.2\linewidth}|}
-    \hline
-    \multicolumn{1}{|c|}{\textbf{Esperimento}} &
-    \multicolumn{1}{c|}{\textbf{$\xi$}}
-    \tabularnewline \hline
-
-2cgroup-4cpu-fifo-k99-c99 & -0.023\tabularnewline \hline
-nocgroup-8cpu-fifo-k99-c99 & -0.43  \tabularnewline \hline
-cgroup-fifo-k90-c99 & 0.25 \tabularnewline \hline
-nocgroup-2-isolcpus-fifo-k99-c99 & 1.08\tabularnewline \hline
-
-\end{tabular}
-\caption{Fit rilevanti dei dati raccolti con la GEV}
+\small
+    \begin{tabular}{lc}
+    \toprule
+    \textbf{Experiment} & \textbf{$\xi$} \\ \midrule
+    2cgroup-4cpu-fifo-k99-c99 & -0.023 \\
+    nocgroup-8cpu-fifo-k99-c99 & -0.43 \\
+    cgroup-fifo-k90-c99 & 0.25 \\
+    nocgroup-2-isolcpus-fifo-k99-c99 & 1.08 \\ \bottomrule
+    \end{tabular}
+\caption{GEV Fit Shape Parameters ($\xi$) for Key Experiments}
 \label{tab:fit_data}
 \end{table}
 
-\begin{figure}[h]
+\begin{figure}[htbp]
     \centering
-    \begin{subfigure}{0.5\textwidth}
-        \includegraphics[width=0.95\linewidth]{figures/ch2/evt/qqplot-2cgroup-4cpu-fifo-k99-c99.pdf}
-    \end{subfigure}\hfil
-    \begin{subfigure}{0.5\textwidth}
-        \includegraphics[width=0.95\linewidth]{figures/ch2/evt/qqplot-nocgroup-8cpu-fifo-k99-c99.pdf}
-    \end{subfigure}
-    \begin{subfigure}{0.5\textwidth}
-        \includegraphics[width=0.95\linewidth]{figures/ch2/evt/qqplot-cgroup-fifo-k90-c99.pdf}
-    \end{subfigure}\hfil
-    \begin{subfigure}{0.5\textwidth}
-        \includegraphics[width=0.95\linewidth]{figures/ch2/evt/qqplot-nocgroup-2-isolcpus-fifo-k99-c99.pdf}
-    \end{subfigure}
-    \caption{Plot quantile-quantile delle distribuzioni composte dai valori massima con GEV}
+    \includegraphics[width=0.9\textwidth]{figures/ch2/evt/qqplot-2cgroup-4cpu-fifo-k99-c99.pdf}
+    \caption{QQ Plots for Selected GEV-Fitted Experiments}
     \label{fig:variance}
 \end{figure}
-\clearpage
 
-\section{Limite superiore al tempo di startup di un pod}
-\subsection{Modello teorico per il tempo di startup di un pod}
-In base alla descrizione fornita in \cref{section:kubernetes}, Kubernetes può essere modellato come un sistema mixed criticality in cui ci sono applicazioni critiche (indicate come pod) con vincoli temporali sulla latenza. In questo caso, come mostrato in \cref{fig:pod_latency}, la latenza totale per la creazione di un pod $L_{pod}$ è composta da due parti:
+\section{Upper Bound on Pod Startup Time}
+\subsection{Theoretical Model for Pod Startup Time}
+Kubernetes can be modeled as a mixed-criticality system. Total latency $L_{pod}$ is:
 \begin{equation*}
     L_{pod}(S) = L_{cp}(S_{cp}) + L_{wn}(S_{wn}) + \delta
 \end{equation*}
-in cui con $L_{cp}(S)$ si indica la latenza generata dal \textbf{control plane} del cluster e con $L_{wn}(S)$ la latenza della worker node. Con $S_{wn}$, si indica lo stato del nodo worker su cui sarà avviato ed installato il pod, con $S_{cp}$ lo stato del control plane. Come anticipato, il progetto verte sull'analisi della kubelet e pertanto sarà trascurato $L_{cp}(S_{cp})$ assumendolo già limitato superiormente. Infine, con $\delta$ si indica la latenza introdotta dalla comunicazione di rete per l'interazione tra kubelet e master.
-
-Analizzando il codice sorgente di kubelet, runc e containerd gli eventi che generano latenza, evidenziati in \cref{fig:pod_latency}, sono:
+where $L_{cp}$ is control plane latency, $L_{wn}$ is worker node latency, and $\delta$ is network overhead. This analysis focuses on $L_{wn}(S_{wn})$. The primary latency contributors are (\cref{fig:latency-detail}):
 \begin{enumerate}
-    \item $t_w$: tempo di attesa della richiesta in coda;
-    \item $t_i$: preparazione dell'immagine del container da utilizzare. Questo tempo include anche il tempo di \textit{download} dell'immagine;
-    \item $t_{runc}$: esecuzione delle system-call sul sistema operativo host da runc per l'effettiva creazione del pod\footnote{Come specificato in \cref{section:linux_container}, la creazione di un pod può includere più container};
+    \item $t_w$: Queuing time at the worker node.
+    \item $t_i$: Image preparation.
+    \item $t_{runc}$: System call execution by runc.
 \end{enumerate}
 
-\begin{figure}[h]
+\begin{figure}[htbp]
     \centering
-    \includegraphics[width=.8\textwidth]{figures/ch3/latency.png}
-    \caption{Analisi latenza di un pod in kubernetes con focus sul worker node}
+    \includegraphics[width=0.7\textwidth]{figures/ch3/latency.png}
+    \caption{Detailed Worker Node Latency Breakdown}
     \label{fig:latency-detail}
 \end{figure}
 
-In \cref{eq:pod_latency}, è riportata l'espressione per stimare la latenza per la creazione di un pod. Tutti i membri della relazione dipendono dallo stato del nodo.
 \begin{equation}
     L_{wn}(S_{wn}) =  t_w(S_{wn}) +  t_i(S_{wn}) + t_{runc}(S_{wn})
     \label{eq:pod_latency}
 \end{equation}
 
-\paragraph{Assunzioni}
-Per le applicazioni real-time, si ipotizza che un pod possa contenere solo un container. Questo è dovuto alle modalità con cui la kubelet si interfaccia con il master: un pod con più applicazioni potrebbe essere ricevuta con più richieste separate oppure una sola delle applicazioni potrebbe bloccarsi richiedendo la ricreazione di un solo container.
-
-\subsubsection{Stato e limiti del modello} I tempi indicati in \cref{eq:pod_latency} dipendono fortemente dallo stato del sistema. In ipotesi semplificata, lo stato del sistema può essere modellato con $2$ variabili:
-\begin{itemize}
-    \item $n$: numero di processi in esecuzione nel sistema;
-    \item $n_q$: numero di richieste in coda alla Kubelet;
-\end{itemize}
-
-Il limite principale di questa formulazione teorica è la codifica dello stato. Infatti, il kernel Linux è molto complicato e non è possibile teorizzare in maniera esaustiva tutto il suo stato.
-
-\subsubsection{Analisi $t_i(S_{wn})$}
-Questo tempo coinvolge tutte le attività che servono a preparare il container e coinvolge sia operazioni su fileystem (copia dell'immagine eseguibile in memoria, modellato con una costante $c$) sia di rete (eventuale download dell'immagine, modellato con la variabile $t_d$). In entrambi i casi, $t_i$ si può modellare con:
+\subsubsection{Analysis of $t_i(S_{wn})$}
+Image preparation involves filesystem and network operations:
 \begin{equation*}
     t_i = \begin{cases}
-    c & \text{se l'immagine è presente già nel registry locale} \\
-    t_d + c & \text{altrimenti}
+    c & \text{if image is locally present} \\
+    t_d + c & \text{otherwise}
     \end{cases}
 \end{equation*}
+Pre-tagging images in containerd ensures $t_i = c$.
 
-Nel caso di containerd, questo tempo può essere $c$ se si assicura che l'immagine del container sia sempre presente sul nodo utilizzando il meccanismo dei tag. Infatti, se si richiede la creazione di un container con tag specifici, containerd non effettuerà alcuna richiesta in rete se questa è già presente in locale.
-
-\subsubsection{Analisi $t_{runc}(S_{wn})$} Dall'analisi del file \textit{nsexec.c} in \cite{Runc}, risulta che per creare un container servono $11$ system-call (elencate in \cref{section:linux_container}). Con l'ipotesi del \textit{single container pod}, si può stimare la latenza generata da \textit{runc} come:
+\subsubsection{Analysis of $t_{runc}(S_{wn})$}
+Based on \textit{nsexec.c}~\cite{Runc}, container creation requires 11 system calls. For a single-container pod:
 \begin{equation*}
     t_{runc}(S_{wn}) = 2 \cdot m \cdot \max (T_{sys})
 \end{equation*}
-dove con $m$ si indica il numero di system-call effettuate da runc (in questo caso $m=11$) e con $T_{sys}$ il tempo per effettuare una system-call. Inoltre, nell'ipotesi di WCET, si moltiplica per $2$ perchè bisogna tenere conto dell'eventuale creazione del container \textit{pause} descritto in \cref{section:linux_container}.
+where $m=11$ and $T_{sys}$ is the system call execution time.
 
-\paragraph{Perchè non si usa una soluzione real-time come Xenomai?} Xenomai è una soluzione dual kernel in cui si trattano in maniera esplicitamente diversa i task real-time attraverso EVL core. Questa soluzione al momento non supporta i namespace e quindi non può essere usata per creare container.
+\subsubsection{Analysis of $t_w(S_{wn})$}
+Bounding $t_w$ requires rate limiting and scheduling modifications.
 
-\subsubsection{Analisi $t_w(S_{wn})$}
-$t_w(S_{wn})$ si indica l'intervallo di tempo che una richiesta gRPC in arrivo dal control plane spende in coda al worker node prima di essere servita. Mettere un limite superiore al tempo di attesa in una coda richiede:
-\begin{itemize}
-    \item applicazione di politiche di rate limiting;
-    \item modifica delle politiche di scheduling;
-\end{itemize}
-La teoria delle code utilizza i valori medi per stimare i tempi medi di attesa delle richieste, ma per avere un WCET bisogna utilizzare la Extreme Value Theory. Inoltre, non sono verificate le ipotesi di teorema di limite centrale.
+\paragraph{Rate Limiting: Fixed Window Algorithm}
+Limits requests within a predefined timeframe (\cref{fig:fixed_window})~\cite{FixedWindowAlgorithm}.
 
-\paragraph{Rate limiting: algoritmo fixed window}
-In questo approccio, viene definita una finestra di tempo di durata predefinita in cui è possibile server un numero limitato di richieste in un certo intervallo temporale. Se il numero di richieste supera una soglia predefinita (limite di rate), le richieste eccedenti possono essere respinte, ritardate o gestite in qualche modo, come mostrato in \cref{fig:fixed_window}\cite{FixedWindowAlgorithm}. I parametri principali dell'algoritmo sono:
-\begin{itemize}
-    \item \textbf{maxCount}: numero massimo di richieste nella coda;
-    \item \textbf{windowLength}: durata dello slot temporale. Quando termina uno slot, viene effettuato un reset del numero di richieste presenti nel sistema;
-\end{itemize}
-
-\begin{figure}[H]
+\begin{figure}[htbp]
 \centering
-\includegraphics[width=0.8\textwidth]{figures/ch3/fixed_window.png}
-\caption{Flusso di esecuzione algoritmo fixed window}
+\includegraphics[width=0.7\textwidth]{figures/ch3/fixed_window.png}
+\caption{Fixed Window Algorithm Flowchart}
 \label{fig:fixed_window}
 \end{figure}
 
-\paragraph{Scheduling: deferrable server}
-Il deferrable server fornisce un test di schedulabilità teorico in base ai suoi parametri e il numero di task nel sistema. Questa soluzione potrebbe essere introdotta per garantire ad ogni richiesta di pod real-time una deadline.
-
+\paragraph{Scheduling: Deferrable Server}
+A deferrable server provides a theoretical schedulability test to guarantee deadlines.
 \begin{equation*}
-    U_p \leq n \big[\big(\frac{U_s + 2}{2U_s + 1}\big)^{1/n} - 1\big]
+    U_p \leq n \left[\left(\frac{U_s + 2}{2U_s + 1}\right)^{1/n} - 1\right]
 \end{equation*}
 
-Questa soluzione è collaudata con lo scheduler rate-monotonic già implementato nel Kernel Linux attraverso Sched-FIFO utilizzato per gli esperimenti.
+This approach is compatible with the SCHED\_FIFO rate-monotonic scheduler in the Linux kernel.
 
 \clearpage
-\addcontentsline{toc}{section}{Riferimenti}
+\addcontentsline{toc}{section}{References}
 \bibliographystyle{plain}
 \bibliography{refs}
 \end{document}
