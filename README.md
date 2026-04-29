@@ -23,7 +23,7 @@ To get the full material, make sure to clone with the `--recursive` flag.
 - [Operative Research](./operative-research/)
   - Includes [Google HashCode 2021](./operative-research/google-hashcode-2021/).
 - [Real-Time Industrial Systems](./real-time-industrial-systems/)
-  - Includes [RT Analysis](./real-time-industrial-systems/rt-analysis/) (submodule).
+  - Includes [RT Analysis](./real-time-industrial-systems/rt-analysis/) (submodule) and [Criticality Aware Kubernetes] (./real-time-industrial-systems/criticality-aware-kubernetes/).
 - [Web and Real-Time Communication Systems](./web-and-real-time-communication-systems/)
   - Includes [RT Jam](./web-and-real-time-communication-systems/rt-jam/) (submodule).
 - [Data Structures and Algorithms](./data-structures/)
