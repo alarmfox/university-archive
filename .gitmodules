@@ -13,3 +13,6 @@
 [submodule "software-architecture-design/game-repository"]
 	path = software-architecture-design/game-repository
 	url = https://github.com/alarmfox/game-repository
+[submodule "real-time-industrial-systems/criticality-aware-kubernetes"]
+	path = real-time-industrial-systems/criticality-aware-kubernetes
+	url = https://github.com/alarmfox/criticality-aware-kubernetes
