@@ -1,0 +1,76 @@
+\documentclass[11pt,a4paper]{article}
+
+% --- Packages ---
+\usepackage[margin=0.8in]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{charter} % Professional academic font
+\usepackage{parskip} % Better paragraph spacing
+
+% --- Formatting ---
+\definecolor{primary}{RGB}{0, 0, 0}
+\definecolor{links}{HTML}{0000EE}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=links,
+    urlcolor=links,
+}
+
+% Custom Header Command
+\newcommand{\contactheader}{
+    \begin{center}
+        {\huge \textbf{Giuseppe Capasso}} \\
+        \vspace{2mm}
+        \small{
+            Naples, Italy \\
+            \href{mailto:capassog97@gmail.com}{capassog97@gmail.com}| +39 327-3699-303\\
+            \href{https://giuseppe.capass.org}{giuseppe.capass.org} |
+            \href{https://github.com/alarmfox}{github.com/alarmfox} |
+            \href{https://linkedin.com/in/giuseppe-capasso97}{linkedin.com/in/giuseppe-capasso97}
+        }
+    \end{center}
+    \vspace{2mm}
+    \hrule height 0.5pt
+    \vspace{8mm}
+}
+
+\begin{document}
+\pagestyle{empty}
+
+\contactheader
+\hfill \today
+
+\textbf{Subject: Application for Emerging Digital Technologies PhD position}
+
+Dear Members of the Selection Committee,
+
+I am writing to apply for the PhD position in Computer Engineering focused on real-time, energy-aware, and resource-aware AI for distributed systems. My academic trajectory has been defined by a bottom-up approach to systems. I believe that to build the next generation of intelligent edge-cloud infrastructures requires a deep understanding of the interplay between high-level orchestration, real-time predictability, and the underlying hardware acceleration.
+
+Recently, I completed my M.Sc. in Computer Engineering at the University of Naples Federico II. My thesis work on secure firmware for RISC-V allowed me to implement VM-based Confidential Computing adhering to the CoVE specification. Building upon my master’s thesis, my research internship focused on Confidential Computing architectures, where I engineered a trusted hypervisor for RISC-V. Additionally, I built the foundational software stack from the ground up for the Simply-V soft-SoC enabling a platform to experiment with hardware design, high-performance computing and hardware-acceleration. The technical outcomes of this research resulted in two academic papers currently journal submissions.
+
+During my Real-Time Industrial System course, I worked on Criticality Aware Kubernetes. In this project, I analyzed the kubelet and container runtimes (such as containerd and runc) to model and provide theoretical bounds for pod startup latency. By evaluating different kernel scheduling algorithms (e.g., \texttt{SCHED\_FIFO} vs. \texttt{SCHED\_OTHER}) and cgroup configurations, I applied Extreme Value Theory to estimate latency distributions, addressing the predictability requirements of hard real-time applications in cloud-native environments.
+
+Furthermore, I strongly value energy efficiency and sustainability in modern computing architectures. This interest led me to develop a fine-grained benchmarking tool for Trusted Execution Environments on Intel SGX, where I measured instructions, I/O patterns, and energy consumption using Linux eBPF and Intel RAPL.
+
+This technical foundation is complemented by five years of leadership as an instructor and mentor at the Cisco DTLab. Leading practical workshops on networking, DevOps, and Cybersecurity for over 100 students has solidified my understanding of network protocols and refined my ability to effectively communicate complex architectural concepts and coordinate technical projects.
+
+My research vision is to contribute to the creation of secure, predictable, and hardware-accelerated platforms for the edge-cloud continuum. The RETIS Lab’s world-class expertise in real-time systems represents the ideal environment for me to grow as a researcher.
+
+I hope that my background in systems programming, real time kernel mechanisms, and hardware level isolation may provide a useful contribution to your research group.
+
+Thank you for your time and consideration.
+
+\vspace{0.5cm}
+
+Sincerely,
+
+\vspace{0.5cm}
+
+\hfill Giuseppe Capasso
+
+\end{document}

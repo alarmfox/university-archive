@@ -1,0 +1,71 @@
+\documentclass[11pt,a4paper]{article}
+
+% --- Packages ---
+\usepackage[margin=0.8in]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{charter} % Professional academic font
+\usepackage{parskip} % Better paragraph spacing
+
+% --- Formatting ---
+\definecolor{primary}{RGB}{0, 0, 0}
+\definecolor{links}{HTML}{0000EE}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=links,
+    urlcolor=links,
+}
+
+% Custom Header Command
+\newcommand{\contactheader}{
+    \begin{center}
+        {\huge \textbf{Giuseppe Capasso}} \\
+        \vspace{2mm}
+        \small{
+            Naples, Italy \\
+            \href{mailto:capassog97@gmail.com}{capassog97@gmail.com}| +39 327-3699-303\\
+            \href{https://giuseppe.capass.org}{giuseppe.capass.org} |
+            \href{https://github.com/alarmfox}{github.com/alarmfox} |
+            \href{https://linkedin.com/in/giuseppe-capasso97}{linkedin.com/in/giuseppe-capasso97}
+        }
+    \end{center}
+    \vspace{2mm}
+    \hrule height 0.5pt
+    \vspace{8mm}
+}
+
+\begin{document}
+\pagestyle{empty}
+
+\contactheader
+\hfill \today
+
+\textbf{Subject: Application for PhD Position MSCA Newton – Design of Software-Defined WAN controllers for 6G networks}
+
+Dear Prof. Adlen Ksentini and Members of the Selection Committee,
+
+I am writing to apply for the PhD position on \textit{Design of SD-WAN controllers for 6G networks} within the NEWTON Doctoral Network. My academic trajectory has been defined by a ``bottom-up'' approach to systems: I believe that to build the next generation of 6G networks, one must understand the interplay between high-level orchestration and the underlying hardware acceleration.
+
+Recently, I completed my M.Sc. in Computer Engineering at the University of Naples Federico II (110/110 cum laude). My thesis work on secure firmware for RISC-V allowed me to implement VM-based Confidential Computing adhering to the CoVE specification. Building upon my master's thesis, my research internship focused on Confidential Computing architectures, where I engineered a \textit{trusted} hypervisor for RISC-V. Additionally, I built the foundational software stack from the ground up for the \textbf{Simply-V} soft-SoC enabling a platform to experiment with hardware design, high-performance computing and hardware-acceleration.
+The technical outcomes of this research resulted in two academic papers currently undergoing conference and journal submissions. Beyond academic work, my passion for the intersection of systems security and hardware acceleration drives my independent research. I am currently developing \textit{uav}, a lightweight malware analysis framework for the Linux kernel that leverages low-level mechanisms (such as EBPF/LSM) to detect advanced threat patterns. Moreover, my objective is to explore the offloading of these detection algorithms onto SmartNICs for line-rate network threat inference, an ambition that directly aligns with the NEWTON project's goal of exploring DPU-accelerated data planes.
+
+This technical foundation is complemented by five years of leadership as an instructor and a mentor at the Cisco DTLab. Leading workshops on CCNA, DevOps, and Cybersecurity for over 100 students has not only solidified my mastery of networking protocols but also refined my ability to communicate complex architectural concepts. I took on the responsibility of coordinating the broader technical program, which involved mentoring fellow instructors and liaising directly with corporate partners to structure real-world project phases for our cohorts.
+
+My research vision is focused on the creation of trusted, hardware-accelerated platforms. In an increasingly interconnected world, privacy-preserving and open systems are essential to avoid vendor lock-in and build infrastructure that society can truly rely on. EURECOM’s leadership in the OpenAirInterface Software Alliance represents the ideal environment for me to realize this vision. I am particularly motivated by the opportunity to explore new dataplane solutions and to participate in industrial secondments to gain a practical perspective on 6G deployment.
+
+I am confident that my experience in systems programming, hardware-level isolation, and professional technical instruction will allow me to make significant contributions to the NEWTON project. Thank you for your time and consideration. I look forward to the possibility of discussing my application with you.
+
+\vspace{0.5cm}
+
+Sincerely,
+
+\vspace{0.5cm}
+
+\hfill Giuseppe Capasso
+
+\end{document}

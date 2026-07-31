@@ -1,0 +1,298 @@
+\documentclass[11pt,a4paper]{article}
+
+% --- Packages ---
+\usepackage[margin=1in]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{charter}
+\usepackage{parskip}
+\usepackage{graphicx}
+\usepackage{amsmath, amssymb}
+\usepackage{fancyhdr}
+\usepackage{comment}
+\usepackage{booktabs}
+\usepackage{cleveref}
+\usepackage[bottom]{footmisc}
+\usepackage{pgfgantt}
+
+\crefformat{section}{\S#2#1#3}
+\crefformat{subsection}{\S#2#1#3}
+\crefformat{subsubsection}{\S#2#1#3}
+\crefformat{figure}{#2Figure~#1#3}
+\crefformat{footnote}{#2\footnotemark[#1]#3}
+\crefformat{table}{#2Table~#1#3}
+\crefformat{equation}{#2Equation~#1#3}
+
+\usepackage[style=ieee, sorting=none]{biblatex}
+\renewcommand*{\bibfont}{\small}
+
+% --- Bibliography Setup ---
+\addbibresource{references.bib} % Uncomment and create this file for your citations
+
+% --- Colors ---
+\definecolor{primary}{RGB}{0, 0, 0}
+\definecolor{links}{HTML}{0000EE}
+\definecolor{santannablue}{HTML}{26428B}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=links,
+    urlcolor=links,
+    citecolor=links,
+}
+
+% --- Section Formatting ---
+\titleformat{\section}
+  {\normalfont\Large\bfseries\color{santannablue}}{\thesection}{1em}{}
+\titleformat{\subsection}
+{\normalfont\large\bfseries\color{santannablue}}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}
+{\normalfont\bfseries\color{santannablue}}{\thesubsubsection}{1em}{}
+
+% --- Header and Footer ---
+\pagestyle{fancy}
+\fancyhead[L]{\small Giuseppe Capasso}
+\fancyhead[R]{\small PhD Research Proposal - SSSA}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% --- Custom Title Command ---
+\newcommand{\proposaltitle}[1]{
+    \begin{center}
+        \vspace*{0.1cm}
+        {\LARGE \bfseries \color{santannablue} #1} \\[1.5ex]
+        {\large \textbf{Giuseppe Capasso}} \\[1ex]
+        \small{
+            \vspace{0.1cm}
+            \textbf{Program:} PhD in Emerging Digital Technologies\\
+            \textbf{Curriculum:} Cyber-Physical Systems\\ % Adjust if the specific curriculum name is different
+        }
+    \end{center}
+    \vspace{0.3cm}
+    \hrule height 0.5pt
+    \vspace{0.5cm}
+}
+
+\begin{document}
+
+% 1. TITOLO DELLA RICERCA
+\proposaltitle{Towards Secure, Energy-Aware and Real-Time Orchestration on Heterogeneous Platforms}
+
+\section*{Abstract}
+The proliferation of data-intensive applications has driven a paradigm shift toward heterogeneous architectures, pairing general-purpose CPUs with specialized accelerators (e.g., GPUs, NPUs, FPGAs) to efficiently handle complex workloads like AI inference and line-rate network processing. However, orchestrating mixed-criticality workloads on these platforms introduces severe challenges in guaranteeing hard real-time determinism, enforcing workload isolation, and maintaining strict energy efficiency for sustainable computing. This research proposes a comprehensive orchestration framework to enable secure, energy-aware, and predictable execution across heterogeneous platforms. By converging partitioned real-time hypervisors with containerized orchestration and secure hardware pass-through (e.g., SR-IOV), the architecture ensures strict spatial and temporal isolation for modern accelerators.
+
+\begin{comment}
+    Job description:
+    The research will address how to make AI pipelines more efficient adaptive and deployable across heterogeneous platforms, exploring topics such as real-time AI scheduling, edge-cloud execution, distributed learning, model optimization and accelerator aware deployment.
+
+    Topics:
+    - Real-Time and Energy-aware AI and distributed inference
+    - Real-Time scheduling of AI workloads across heterogeneous platforms
+    - Real-time edge-cloud orchestration and offloading strategies for software workloads
+    - Experimental work on advanced computing platforms and accelerators
+\end{comment}
+
+\section{Scientific Background}
+\label{sec:background}
+
+The rapid expansion of Artificial Intelligence (AI) has forced a fundamental paradigm shift in hardware architecture, driving the transition from classical \textit{homogeneous} systems to highly \textit{heterogeneous} platforms. Traditional homogeneous architectures relied on a limited number of powerful, general-purpose cores (typically featuring out-of-order, multiple-issue superscalar pipelines) optimized for average-case performance. However, modern AI workloads demand specialized, highly parallel processing. This necessity catalyzed the adoption of heterogeneous computing, pairing general-purpose CPUs with domain-specific hardware such as GPUs, Data Processing Units (DPUs), and Neural Processing Units (NPUs). To maximize efficiency, these architectures frequently incorporate Application-Specific Integrated Circuits (ASICs) and Field-Programmable Gate Arrays (FPGAs) \cite{mittal2015survey, 9567066}. This architectural diversity enables systems to operate across distinct power and frequency domains while offering critical hardware flexibility through the dynamic reconfigurability of FPGAs \cite{maisto2026compute}.
+
+Initially confined to datacenters for heavy AI training, this architectural heterogeneity has now permeated the edge-cloud continuum \cite{moreschini2022cloud}. Driven by the demand for local, low-latency distributed inference, modern Systems-on-Chip (SoCs) routinely feature complex mixtures of processing elements (PEs), including asymmetric core clusters alongside dedicated hardware accelerators \cite{maisto2026compute}. When these platforms are deployed in mission-critical cyber-physical systems (such as autonomous vehicles or industrial robotics) they introduce unprecedented operational challenges due to strict, hard real-time constraints. Ensuring safety and determinism requires re-evaluating traditional execution models to co-optimize algorithms and architectures for heterogeneous hardware while meeting strict timing requirements.
+
+\paragraph{Energy-Aware Scheduling}
+While heterogeneous platforms offer immense computational potential, they introduce profound complexities in resource management \cite{chen2022energy}. The primary bottleneck in modern deployments is no longer strictly computational throughput, but rather energy consumption and thermal limitation. Consequently, orchestrating AI workloads requires a shift toward \textit{energy-aware and real-time scheduling}. Schedulers must dynamically make intelligent, context-aware decisions on task mapping (such as offloading lightweight inference to an NPU to minimize power draw) while strictly adhering to real-time latency constraints and system-wide energy budgets \cite{bambagini2016energy}.
+
+\paragraph{High-Performance Distributed Interconnects}
+In heavily distributed \textit{High-Performance Computing} (HPC) environments, the communication fabric becomes a critical performance bottleneck. State-of-the-art distributed setups increasingly rely on high-speed interconnects such as \textit{NVLink}, \textit{InfiniBand}, and \textit{RDMA} to enable low-latency, high-bandwidth communication between accelerators \cite{li2019evaluating}. Looking forward, the integration of emerging open network standards (particularly those driven by the \textit{Ultra Ethernet Consortium} \cite{10614558}) will be essential for scalable HPC. Orchestrating workloads across these topologies requires novel scheduling approaches that co-optimize compute, memory, and network resources while preserving real-time guarantees across distributed nodes.
+
+\paragraph{Confidential Computing and Trusted Accelerators}
+As AI pipelines transition toward distributed execution across heterogeneous nodes, ensuring data confidentiality and safeguarding proprietary models have emerged as fundamental architectural requirements. \textit{Confidential Computing} addresses this by isolating sensitive workloads within hardware-backed \textit{Trusted Execution Environments} (TEEs). However, a major open challenge remains: extending this security paradigm to peripheral devices to establish \textit{trusted accelerators} \cite{giantsidi2025tnic}. Expanding the Trusted Computing Base (TCB) to encompass accelerators requires sophisticated hardware-level mechanisms, such as PCIe IDE (Integrity and Data Encryption) for securing Transaction Layer Packets (TLPs)\cite{pciide}, and the Security Protocol and Data Model (SPDM)\cite{spdm} for device attestation. The practical implementation of these standards is evidenced by the emergence of technologies like Intel TDX Connect \cite{TDXCONNECT} and AMD SEV Trusted I/O \cite{AMDTIO}.
+
+\paragraph{Secure Edge-Cloud Orchestration}
+At the infrastructure level, modern edge-cloud workloads demand strict software isolation, typically achieved by deploying lightweight, high-performance hypervisors like \textit{Firecracker} \cite{agache2020firecracker} to provision \textit{microVMs}. Reconciling this cloud-native virtualization stack with hardware-enforced TEEs, trusted accelerators, and ultra-low-latency network fabrics is highly non-trivial \cite{holmes2024severifast, barletta_et_al:LIPIcs.ECRTS.2022.15}.
+
+\paragraph{Strategic Motivation: Energy Resilience and European Sovereignty}
+Against the backdrop of global energy crises, optimizing the power footprint of distributed computing has transitioned from an environmental aspiration to a critical economic imperative. Concurrently, achieving \textit{Digital Sovereignty} is a paramount European objective. The ENISA Cloud Sovereignty Framework \cite{ENISA} establishes \textit{Sovereignty Effectiveness Assurance Levels} (SEAL) to mandate operational independence for Cloud Providers \cite{cloud-sovereignty-framework}. By combining open architectures that exclude the provider from the TCB via hardware-enforced TEEs with dynamic, energy-aware scheduling, this research lays the technological groundwork for a secure, energy-efficient, and truly sovereign European intelligent infrastructure.
+
+\section{Scope and Expectations}
+\label{sec:scope}
+
+The primary objective of this research is to design and implement low-level system mechanisms for the predictable and energy-aware execution of AI workloads across heterogeneous platforms. This research adopts a bottom-up systems approach. By modifying real-time kernel schedulers, leveraging high-performance network interconnects and improving orchestration system, the project aims to bridge the gap between real-time predictability and dynamic, accelerator-driven AI inference both in mixed-criticality and hard real-time systems.
+
+The research will be driven by the following three specific objectives (discussed in \cref{sec:rt-aw-sched} and \cref{sec:distributed}):
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Objective 1: Real-Time and Energy-Aware Scheduling for Heterogeneous Platforms} Extending real-time kernel policies (e.g., \texttt{PREEMPT\_RT}\cite{reghenzani2019real}, \texttt{SCHED\_DEADLINE}\cite{faggioli2009edf,abeni1998integrating}) to co-optimize CPU execution and accelerator offloading, treating energy consumption as a first-class constraint.
+
+    \item \textbf{Objective 2: Virtualization and Workload Isolation} Utilizing hypervisors and hardware pass-through mechanisms (SR-IOV) to safely allocate physical accelerators to mixed-criticality workloads.
+
+    \item \textbf{Objective 3: Predictable Distributed Inference} Integrating local OS scheduling with high-speed, kernel-bypass interconnects (such as RDMA and InfiniBand) to guarantee deterministic tail latencies across multiple nodes.
+
+\end{itemize}
+
+\paragraph{Expected Outcomes and Impact}
+This research is expected to yield a verifiable, open-source systems stack capable of deterministically managing AI pipelines on heterogeneous hardware. Key expectations include:
+\begin{itemize}
+    \item \textbf{Scientific Contribution:} Publication of novel kernel scheduling algorithms, distributed offloading strategies, and systems architecture in real-time and systems conferences (e.g., ECRTS, RTSS, OSDI).
+    \item \textbf{Technological Impact:} A functional, open-source orchestration stack that translates theoretical schedulability into empirical results. By guaranteeing bounded latencies, strict isolation, and energy efficiency, it serves as a foundational technology for next-generation industries like autonomous mobility and secure edge-cloud networks.
+\end{itemize}
+
+\subsection{Real-Time and Energy-Aware Scheduling for Heterogeneous Platforms}
+\label{sec:rt-aw-sched}
+    The research will investigate OS-level mechanisms to predictably schedule AI workloads across asymmetric compute units and hardware accelerators, such as DPUs and NPUs. This involves extending real-time kernel policies to be fully accelerator-aware. The primary goal is to co-optimize CPU scheduling with hardware offloading. By treating system-wide energy consumption and hard real-time deadlines as joint constraints, the proposed scheduler will minimize execution jitter for mixed-criticality tasks, ensuring that power efficiency does not compromise temporal determinism.
+
+    Because target environments span the entire edge-cloud continuum, the specific technological contributions will naturally vary depending on the application domain. For instance, real-time cloud infrastructures and edge servers will primarily focus on extending RT-Linux (\texttt{PREEMPT\_RT}) environments, whereas mission-critical embedded systems and robotics may necessitate targeting specialized RTOSs like FreeRTOS, QNX, VxWorks, or middleware like ROS2.
+
+\subsubsection{Secure Virtualization and Workload Isolation}
+To safely deploy mixed-criticality AI pipelines on shared infrastructure, the underlying system must enforce strict spatial and temporal isolation \cite{CINQUE2022315}. This objective investigates the convergence of real-time scheduling and secure virtualization by evaluating industrial-grade hypervisors and high-assurance microkernels, extending their support to heterogeneous platforms. The research will explore the trade-offs between the flexibility of \textit{Xen} \cite{barham2003xen}---particularly its real-time scheduling capabilities through the \textbf{Real-Time Deferrable Server} (RTDS) \cite{RTDS}---the lightweight, cloud-ready isolation provided by \textit{Firecracker} \cite{agache2020firecracker} microVMs, and the strict deterministic execution offered by partitioned hypervisors such as \text{Jailhouse} \cite{jailhouse}.
+
+\paragraph{Secure Hardware Partitioning}
+Complementing CPU isolation, the architecture will leverage Single Root I/O Virtualization (SR-IOV) \cite{dong2008sr, dong2012high} and secure device pass-through methodologies to enable deterministic access to physical accelerators. By partitioning resources at the hardware level, the research aims to ensure real-time constraints are maintained without compromising the confidentiality of proprietary AI models or introducing cross-workload interference.
+
+\subsubsection{Real-Time Containerization and Cluster Orchestration}
+At the process level, workload isolation is typically achieved using containerization techniques\footnote{While container concepts are prominently featured in Linux, similar real-time constraints and resource isolation requirements can be applied to other RTOSes with reproducible deployments.}. To enforce strict real-time constraints within these shared environments, this research will investigate mechanisms such as \textit{rt-cgroups} and the \texttt{SCHED\_DEADLINE} policy \cite{abeni2019container, samimi2025enabling}, alongside techniques to analyze and mitigate memory interference among applications sharing the same kernel. Understanding these lower-level dynamics (including driver-level time-partitioning to reserve fixed I/O bandwidth) is crucial for establishing a baseline for schedulability within a real-time cloud environment.
+
+\paragraph{Hierarchical Scheduling for Distributed Orchestration}
+Expanding this scope to cluster-wide orchestration reveals a fundamental open challenge: coordinating local container allocation with global, VM-level hypervisor scheduling. Building directly upon recent advancements in real-time container orchestration---which highlight the critical need for joint CPU/GPU partitioning and finer-grained container resource inspection to prevent CPU conflicts \cite{samimi2025enabling}---this research will explore the design of a hierarchical scheduling framework.
+
+Drawing inspiration from proven algorithms such as the Hierarchical Constant Bandwidth Server (H-CBS)\cite{lipari2001hierarchical}, the project aims to model the interactions between the hypervisor and container runtimes to lay the groundwork for an end-to-end schedulability analysis of distributed AI tasks.  This will bridge the gap between traditional cloud servers and resource-constrained edge accelerators, ensuring safety, reliability, and guaranteed tail-latencies across the entire infrastructure.
+
+\subsection{Predictable Distributed Inference}
+\label{sec:distributed}
+As AI models scale beyond a single edge device into the edge-cloud continuum\cite{moreschini2022cloud}, the network fabric frequently becomes the primary source of unpredictability\cite{metz2024empowering}. This objective addresses edge-cloud orchestration by tightly integrating local OS task management with high-speed, kernel-bypass interconnects. The research will involve practical experimentation and evaluation of protocols such as RDMA\cite{guo2016rdma} and emerging open network standards like Ultra Ethernet\cite{hoefler2025ultra}. The aim is to develop network-aware offloading strategies that guarantee predictable tail latencies and deterministic execution times for distributed inference and training workloads.
+
+Achieving this predictability first requires rigorously characterizing network and memory access patterns to mitigate resource contention. By analyzing specific network topologies, the research will formulate theoretical latency bounds and propose strategies to enforce strict spatial and temporal network partitioning. Distributed inference generate unique, highly structured traffic patterns that can be exploited to optimize resource allocation \cite{buschmann2025llms}.
+
+\paragraph{Emerging technologies: UltraEthernet}
+To address the limitations of traditional interconnects in large-scale AI clusters, this research will investigate the newly standardized Ultra Ethernet (UE)\cite{hoefler2025ultra} protocol. Traditional deployments relying on RDMA over Converged Ethernet (RoCE) suffer from head-of-line blocking, congestion spreading, and a strict reliance on lossless, in-order packet delivery\cite{guo2016rdma}. This in-order requirement limits path choice and frequently leads to traffic polarization and suboptimal network utilization. A primary motivation for evaluating UE is its novel Ultra Ethernet Transport (UET) protocol, which natively supports out-of-order reliable packet delivery and per-packet multipathing (packet spraying).
+
+\begin{comment}
+By dynamically altering the Entropy Value for each packet, UE distributes traffic evenly across all network switches, maximizing bandwidth usage without incurring heavy reordering overhead at the receiving endpoint.
+A primary motivation for evaluating UE is its novel Ultra Ethernet Transport (UET) protocol, which natively supports out-of-order reliable packet delivery and per-packet multipathing (packet spraying). By dynamically altering the Entropy Value for each packet, UE distributes traffic evenly across all network switches, maximizing bandwidth usage without incurring heavy reordering overhead at the receiving endpoint. Furthermore, UE introduces advanced congestion management subsystems and fast packet loss detection mechanisms (such as packet trimming) that adapt exceptionally well to the incast traffic patterns typical of distributed inference. Because UET operates seamlessly over existing IPv4/IPv6 and Ethernet link layers, investigating this standard provides a highly pragmatic and scalable path for achieving extreme-scale, predictable AI orchestration without requiring entirely new physical datacenter infrastructures.
+\end{comment}
+
+\section{Proposed Methodology}
+\label{sec:methodology}
+To empirically validate the proposed architecture, the research will follow a systems-engineering approach, progressing from analytical modeling to bare-metal implementation. The methodology relies on an open-source, reproducible software stack deployed over highly instrumented, heterogeneous testbeds.
+
+\subsection{Experimental Testbeds and Hardware}
+The framework will be prototyped on heterogeneous Systems-on-Chip (SoCs) representative of the modern edge-cloud continuum. Initial local orchestration will be evaluated on asymmetric compute platforms (e.g., NVIDIA Jetson Orin, Xilinx Zynq Ultrascale+ etc.) combining general-purpose cores with integrated GPUs and FPGAs. For distributed scenarios, the testbed will scale to multi-node clusters.
+%equipped with programmable SmartNICs or DPUs to evaluate high-performance, kernel-bypass interconnects
+
+\subsection{eBPF-Driven Observability and Profiling}
+A fundamental challenge in real-time systems research is accurately measuring system dynamics without introducing observer effects that perturb temporal determinism. To achieve highly granular, near-zero-overhead observability, this research will extensively leverage \textbf{eBPF} (Extended Berkeley Packet Filter) \cite{gbadamosi2024ebpf, song2024ebpf}.
+
+The methodology employs eBPF across three primary domains:
+\begin{itemize}
+    \item \textbf{Energy and Thermal Profiling:} Custom eBPF programs will be attached to kernel tracepoints to correlate OS scheduling decisions with hardware power states. By synchronizing these traces with hardware telemetry (e.g., Intel RAPL \cite{khan2018rapl} or NVIDIA NVML \cite{nvml}), the research will establish precise energy-per-task profiles.
+    \item \textbf{Dynamic Container Introspection:} To resolve the open challenge of CPU resource conflicts among mixed-criticality containers, eBPF will be used to actively monitor \textit{cgroup} allocations and detect non-real-time background interference in real-time, enabling proactive mitigation by the hierarchical scheduler \cite{cassagnes2020rise, bertinatto2024container}.
+    \item \textbf{Network Latency Tracing:} For distributed inference, eBPF and XDP (eXpress Data Path) will be utilized to trace packets directly within the kernel network stack, allowing for the precise measurement of tail latencies and jitter across the network fabric \cite{vieira2020fast}.
+\end{itemize}
+
+\subsection{Software Prototyping and Formal Validation}
+The validation of the hierarchical scheduling framework will be twofold. First, an analytical schedulability analysis will be conducted to model the multi-layered stack (Hypervisor $\rightarrow$ Container $\rightarrow$ Accelerator), combining traditional \textbf{Worst-Case Execution Time} (WCET) bounds with \textit{probabilistic WCET} (pWCET) estimations for workloads where deterministic bounds are unfeasible \cite{reghenzani2020probabilistic}. Second, this analytical model will be empirically validated using established benchmarking suites (e.g., RT-App) and custom workloads (e.g., deploying containerized PyTorch/TensorRT models), comparing the proposed solution against vanilla cloud-native orchestrators like standard Kubernetes.
+
+\section{Three-Year Research Plan}
+\label{sec:plan}
+
+The research activities are structured over a 36-month period, progressing from single-node scheduling and secure virtualization to multi-node distributed orchestration. The final phase of the project is anchored by a six-month visiting research period abroad. A high-level summary of the yearly objectives is provided in \cref{tab:timeline}, while \cref{fig:timeline} details the specific milestone allocations via a Gantt chart.
+
+\begin{table}[htbp]
+    \centering
+    \renewcommand{\arraystretch}{1.4}
+    \begin{tabular}{| p{0.12\linewidth} | p{0.25\linewidth} | p{0.55\linewidth} |}
+        \hline
+        \textbf{Period} & \textbf{Phase} & \textbf{Key Activities and Milestones} \\
+        \hline \hline
+
+        \textbf{Year 1} & Local RT-Scheduling \& Secure Virtualization &
+        Literature review; establish heterogeneous testbed; design energy-aware scheduling policies; OS-level integration; evaluate different virtualization systems (KVM/Jailhouse/Xen) and SR-IOV for accelerator integration. \\
+        \hline
+
+        \textbf{Year 2} & Container Orchestration \& Distributed Scaling &
+        Design real-time containerization (\textit{rt-cgroups}, \texttt{SCHED\_DEADLINE}); model hierarchical scheduling; scale to multi-node setups; characterize and integrate high-speed interconnects. \\
+        \hline
+
+        \textbf{Year 3} & Visiting Period, Evaluation \& Thesis &
+        \textbf{Visiting period abroad (6 months)}; conduct end-to-end validation of the distributed inference pipelines; final comprehensive benchmarking; data analysis and thesis drafting. \\
+        \hline
+    \end{tabular}
+    \caption{Summary of the Three-Year Research Plan}
+    \label{tab:timeline}
+\end{table}
+
+\paragraph{Year 1: Local Orchestration and Secure Virtualization}
+The first year establishes the foundation for single-node resource management and isolation. Utilizing heterogeneous testbeds with asymmetric compute units, the primary objective is to architect an energy-aware, deterministic OS-level scheduling policy. Following rigorous baseline profiling for power consumption and execution jitter, the research will integrate partitioned hypervisors and secure device pass-through mechanisms (e.g., SR-IOV) to enforce strict spatial and temporal isolation for mixed-criticality workloads at the hardware level.
+
+\paragraph{Year 2: Containerization and Distributed Scaling}
+The second year transitions from bare-metal infrastructure to process-level isolation and cluster-wide orchestration. The focus will be on developing real-time container mechanisms and hierarchical scheduling models to coordinate local allocation and proactively prevent CPU resource conflicts. Once node-level determinism is secured, the framework will scale to support multi-node distributed inference, integrating kernel-bypass communication protocols (e.g., RDMA) to guarantee predictable tail latencies across the high-performance network fabric.
+
+\paragraph{Year 3: Visiting Period Abroad, Validation, and Dissemination}
+The final year centers on comprehensive validation a six-month visiting period abroad. The concluding months will focus on extracting exhaustive benchmarks to demonstrate the architecture's temporal determinism and energy efficiency, culminating in the dissemination of results and the drafting of the doctoral thesis.
+
+\begin{figure}[htpb]
+\centering
+\begin{ganttchart}[
+    vgrid={*1{draw=black!10}}, % Subtle vertical grid lines
+    hgrid={*1{draw=black!5}},  % Added very subtle horizontal lines for readability
+    x unit=0.85cm,
+    y unit title=0.6cm,
+    y unit chart=0.6cm,
+    title label font=\bfseries\footnotesize,
+    bar label font=\footnotesize,
+    bar/.append style={fill=santannablue!80, rounded corners=2pt, draw=none}, % Default blue
+    bar height=0.5,
+    group right shift=0,
+    group top shift=0.7,
+    group height=.3,
+    group peaks width={0.2},
+    inline
+    ]{1}{12} % 12 Quarters in 3 years
+
+    % --- Top Headers (Years) ---
+    \gantttitle{Year 1}{4}
+    \gantttitle{Year 2}{4}
+    \gantttitle{Year 3}{4} \\
+
+    % --- Bottom Headers (Quarters) ---
+    \gantttitle{Q1}{1} \gantttitle{Q2}{1} \gantttitle{Q3}{1} \gantttitle{Q4}{1}
+    \gantttitle{Q1}{1} \gantttitle{Q2}{1} \gantttitle{Q3}{1} \gantttitle{Q4}{1}
+    \gantttitle{Q1}{1} \gantttitle{Q2}{1} \gantttitle{Q3}{1} \gantttitle{Q4}{1} \\
+
+    % --- Gantt Bars ---
+    \ganttbar[inline=false]{Lit. Review \& Arch. Design}{1}{2} \\
+    \ganttbar[inline=false]{RT-Linux \& Virtualization}{2}{4} \\
+    \ganttbar[inline=false]{RT Containers \& Hierarchical Scheduling}{5}{7} \\
+    \ganttbar[inline=false]{Distributed Inference}{7}{9} \\
+
+    % \ganttbar[inline=false, bar/.append style={fill=orange!80}]{Visiting Period Abroad}{9}{10} \\
+    \ganttbar[inline=false]{Visiting Period Abroad}{9}{10} \\
+
+    \ganttbar[inline=false]{End-to-End Evaluation \& Benchmarks}{10}{11} \\
+    \ganttbar[inline=false]{Thesis Drafting \& Dissemination}{11}{12}
+\end{ganttchart}
+\caption{\textit{Gantt Chart}: three-year research plan and projected milestones.}
+\label{fig:timeline}
+\end{figure}
+
+% 6. RELAZIONI E RICADUTE SULLE TEMATICHE DI RICERCA DEI CURRICULA DEL PHD EDT
+\section{Relation and Impact on PhD EDT Curricula}
+This research proposal falls within the scope of the \textbf{Cyber-Physical Systems} curriculum of the PhD program in Emerging Digital Technologies.
+
+The core objective of the project (developing real-time, energy-aware, and resource-aware AI for distributed systems) directly addresses the curriculum's focus on methodologies, models, and algorithms for distributed cyber-physical systems that guarantee performance, reliability, and security.
+
+Specifically, the proposed research will heavily leverage and expand upon the curriculum's key competency areas:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Real-Time Operating Systems and Virtualization:} Building upon my previous work with confidential virtualization on RISC-V and real-time Linux scheduling, this project will develop novel orchestration strategies to provide deterministic execution guarantees for AI workloads across edge-cloud continuums.
+    \item \textbf{Resource Optimization on Hardware Accelerators:} The research will actively address how to deploy and adapt AI pipelines across heterogeneous platforms, specifically targeting the optimized management of hardware accelerators and infrastructure to meet strict energy and timing constraints.
+\end{itemize}
+
+% --- Bibliography ---
+\newpage
+\printbibliography[heading=bibintoc, title={References}]
+
+\end{document}
