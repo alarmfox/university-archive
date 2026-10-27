@@ -1,0 +1,96 @@
+\documentclass[a4paper, 14pt, oneside]{extbook}
+\usepackage[T1]{fontenc}
+\usepackage[utf8x]{inputenc}
+\usepackage{geometry}
+\usepackage{courier}
+\usepackage[bookmarks]{hyperref}
+\usepackage[italian]{babel}
+
+\newgeometry{
+left=   1.5 in,
+bottom= 1.5 in,
+right=  1 in,
+top=    1 in
+}
+
+\usepackage{fancyhdr}
+
+% Grafica
+\usepackage{graphicx,pstricks}
+\usepackage{graphics}
+\graphicspath{{img/}}
+
+% Package usati per il frontespizio
+\usepackage{tikz}
+\usepackage{pgf-pie}
+\usepackage{pgfplots}
+\pgfplotsset{width=7cm,compat=1.8}
+\usetikzlibrary{patterns}
+
+
+%Algorithm
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+
+\setlength\headheight{44.2pt}
+%Page Style
+\usepackage{setspace}
+%\setstretch{2.5}
+\doublespacing
+
+%\cfoot{\thepage}
+\lhead[]{}
+\rhead[]{\leftmark}
+
+\pagestyle{fancy}{
+\lhead{\includegraphics[scale=0.3]{img/logo/hlogo.png}}
+\rhead{\footnotesize{Titolo abbreviato come intestazione}}
+}
+
+%Other
+\usepackage{comment}
+\usepackage{amsmath}
+
+%Titolo indice
+\renewcommand*\contentsname{Indice}
+
+%Inclusione bibliografia nell'indice
+\renewcommand\bibname{Bibliografia}
+\usepackage[nottoc,notlot,notlof]{tocbibind}
+
+\usepackage[noabbrev]{cleveref}
+
+\crefformat{section}{\S#2#1#3}
+\crefformat{subsection}{\S#2#1#3}
+\crefformat{subsubsection}{\S#2#1#3}
+\crefformat{figure}{#2Figura~#1#3}
+\crefformat{footnote}{#2\footnotemark[#1]#3}
+\crefformat{table}{#2Tabella~#1#3}
+\crefformat{equation}{#2Equazione~#1#3}
+\crefformat{chapter}{#2Capitolo~#1#3}
+
+
+\begin{document}
+
+%\maketitle
+\input{0_frontespizio.tex}
+\frontmatter
+
+\input{dedica.tex}
+
+{\setstretch{1.5}
+\tableofcontents
+}
+
+\mainmatter
+
+\include{introduzione}
+\include{chapter1}
+\include{chapter2}
+
+\include{conclusion}
+
+\bibliography{bibliography}
+\bibliographystyle{plain}
+
+\end{document}
