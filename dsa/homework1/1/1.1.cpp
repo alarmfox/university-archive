@@ -97,13 +97,13 @@ std::ostream& print_vector(const std::vector<T>& input, std::ostream& out) {
 
 int main() {
     std::vector<std::vector<int>> inputs = {
-        { 5, 6, 4, 5, 7, 9 }, 
+        { 5, 6, 4, 5, 7, 9 },
         { 1, 2, 3 },
         { 1, 2 },
         { 2, 4, 3, 6, 6, 9, 3 },
     };
     std::vector<std::vector<int>> results = {
-        { 5, 6, 4, 9, 7, 5 }, 
+        { 5, 6, 4, 9, 7, 5 },
         { 1, 3, 2 },
         { 1, 2 },
         { 2, 4, 3, 3, 9, 6, 6 },

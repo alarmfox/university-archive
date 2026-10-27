@@ -1,6 +1,6 @@
 #include <iostream>
 
-template <typename T> 
+template <typename T>
 class Treap {
 private:
     struct Node {
@@ -138,7 +138,4 @@ int main() {
     t.treap_insert(1);
 
     t.print(std::cout);
-
-
-    
 }

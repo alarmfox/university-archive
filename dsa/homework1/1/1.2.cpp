@@ -6,7 +6,6 @@
 
 #define DEBUG 1
 
-
 const std::vector<int> find_min(std::vector<int>& input) {
     std::unordered_map<int, std::vector<int>> map;
     std::vector<int> result (input.size());
@@ -26,7 +25,7 @@ const std::vector<int> find_min(std::vector<int>& input) {
             result[position] = i + positions.size() -1;
         }
         i+=positions.size() -1 ;
-    } 
+    }
 
     return result;
 }
@@ -47,17 +46,17 @@ void assert_vector(const std::vector<int> a, const std::vector<int> b) {
 }
 
 int main() {
-    // table testing: 
+    // table testing:
     // input di test
     std::vector<std::vector<int>> inputs = {
-        { 5, 6, 4, 5, 7, 9 }, 
-        { 6, 5, 9, 11, 25, 19 }, 
+        { 5, 6, 4, 5, 7, 9 },
+        { 6, 5, 9, 11, 25, 19 },
         { 2, 4, 3, 6, 6, 9, 3 },
         { 1, 1, 1, 1, 1, 1, 1 },
     };
     // valori attesi
     std::vector<std::vector<int>> results = {
-        { 2, 3, 0, 2, 4, 5 }, 
+        { 2, 3, 0, 2, 4, 5 },
         { 1, 0, 2, 3, 5, 4 },
         { 0, 3, 2, 5, 5, 6, 2 },
         { 6, 6, 6, 6, 6, 6, 6 }
@@ -70,7 +69,7 @@ int main() {
         }
 
         result = find_min(inputs[i]);
-        
+
         if (DEBUG) {
             std::cout<<"OUTPUT: "; print_vector(result, std::cout) << "\n\n";
         }
