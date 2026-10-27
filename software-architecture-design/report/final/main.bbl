@@ -1,0 +1,218 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.3 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{nty/global//global/global/global}
+    \entry{borrow_checker}{misc}{}{}
+      \field{sortinit}{B}
+      \field{sortinithash}{d7095fff47cda75ca2589920aae98399}
+      \field{labeltitlesource}{title}
+      \field{title}{Borrow Checker}
+      \field{urlday}{15}
+      \field{urlmonth}{4}
+      \field{urlyear}{2023}
+      \field{urldateera}{ce}
+      \verb{urlraw}
+      \verb https://doc.rust-lang.org/1.8.0/book/references-and-borrowing.html
+      \endverb
+      \verb{url}
+      \verb https://doc.rust-lang.org/1.8.0/book/references-and-borrowing.html
+      \endverb
+    \endentry
+    \entry{cargo}{misc}{}{}
+      \field{sortinit}{C}
+      \field{sortinithash}{4d103a86280481745c9c897c925753c0}
+      \field{labeltitlesource}{title}
+      \field{title}{Cargo}
+      \field{urlday}{15}
+      \field{urlmonth}{4}
+      \field{urlyear}{2023}
+      \field{urldateera}{ce}
+      \verb{urlraw}
+      \verb https://doc.rust-lang.org/cargo/
+      \endverb
+      \verb{url}
+      \verb https://doc.rust-lang.org/cargo/
+      \endverb
+    \endentry
+    \entry{go_java_php}{misc}{}{}
+      \field{sortinit}{C}
+      \field{sortinithash}{4d103a86280481745c9c897c925753c0}
+      \field{labeltitlesource}{title}
+      \field{title}{{Comparison between Go, Java and PHP}}
+      \field{urlday}{10}
+      \field{urlmonth}{4}
+      \field{urlyear}{2023}
+      \field{urldateera}{ce}
+      \verb{urlraw}
+      \verb https://web-frameworks-benchmark.netlify.app/result?asc=0&f=spring&l=rust,java&order_by=level64
+      \endverb
+      \verb{url}
+      \verb https://web-frameworks-benchmark.netlify.app/result?asc=0&f=spring&l=rust,java&order_by=level64
+      \endverb
+    \endentry
+    \entry{dto}{misc}{}{}
+      \field{sortinit}{D}
+      \field{sortinithash}{6f385f66841fb5e82009dc833c761848}
+      \field{labeltitlesource}{title}
+      \field{title}{Data Transfer Object Pattern}
+      \field{urlday}{15}
+      \field{urlmonth}{4}
+      \field{urlyear}{2023}
+      \field{urldateera}{ce}
+      \verb{urlraw}
+      \verb https://martinfowler.com/eaaCatalog/dataTransferObject.html
+      \endverb
+      \verb{url}
+      \verb https://martinfowler.com/eaaCatalog/dataTransferObject.html
+      \endverb
+    \endentry
+    \entry{discord_rust}{misc}{}{}
+      \field{sortinit}{D}
+      \field{sortinithash}{6f385f66841fb5e82009dc833c761848}
+      \field{labeltitlesource}{title}
+      \field{title}{{Discord handles trillions of messages}}
+      \field{urlday}{10}
+      \field{urlmonth}{4}
+      \field{urlyear}{2023}
+      \field{urldateera}{ce}
+      \verb{urlraw}
+      \verb https://discord.com/blog/how-discord-stores-trillions-of-messages
+      \endverb
+      \verb{url}
+      \verb https://discord.com/blog/how-discord-stores-trillions-of-messages
+      \endverb
+    \endentry
+    \entry{goreport}{misc}{}{}
+      \field{sortinit}{G}
+      \field{sortinithash}{32d67eca0634bf53703493fb1090a2e8}
+      \field{labeltitlesource}{title}
+      \field{title}{Go Report Card}
+      \field{urlday}{15}
+      \field{urlmonth}{4}
+      \field{urlyear}{2023}
+      \field{urldateera}{ce}
+      \verb{urlraw}
+      \verb https://goreportcard.com/
+      \endverb
+      \verb{url}
+      \verb https://goreportcard.com/
+      \endverb
+    \endentry
+    \entry{hippchen2017designing}{article}{}{}
+      \name{author}{5}{}{%
+        {{hash=96766143442d6465cd4522488ac21a2e}{%
+           family={Hippchen},
+           familyi={H\bibinitperiod},
+           given={Benjamin},
+           giveni={B\bibinitperiod}}}%
+        {{hash=fc173b89af59fc868ba7900e5b8e331e}{%
+           family={Giessler},
+           familyi={G\bibinitperiod},
+           given={Pascal},
+           giveni={P\bibinitperiod}}}%
+        {{hash=cc39b83eaa9170cb318ef844dd23f714}{%
+           family={Steinegger},
+           familyi={S\bibinitperiod},
+           given={Roland},
+           giveni={R\bibinitperiod}}}%
+        {{hash=011cc96822d7baa0be7b01124f4ed55c}{%
+           family={Schneider},
+           familyi={S\bibinitperiod},
+           given={Michael},
+           giveni={M\bibinitperiod}}}%
+        {{hash=a1e267a3007bdfa68c3e098fa2932db1}{%
+           family={Abeck},
+           familyi={A\bibinitperiod},
+           given={Sebastian},
+           giveni={S\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {IARIA}%
+      }
+      \strng{namehash}{bb8ba2b9ba8733af1e13889db9678d4e}
+      \strng{fullhash}{c9d54ad44e94df7517d203bad2a3636a}
+      \strng{fullhashraw}{c9d54ad44e94df7517d203bad2a3636a}
+      \strng{bibnamehash}{bb8ba2b9ba8733af1e13889db9678d4e}
+      \strng{authorbibnamehash}{bb8ba2b9ba8733af1e13889db9678d4e}
+      \strng{authornamehash}{bb8ba2b9ba8733af1e13889db9678d4e}
+      \strng{authorfullhash}{c9d54ad44e94df7517d203bad2a3636a}
+      \strng{authorfullhashraw}{c9d54ad44e94df7517d203bad2a3636a}
+      \field{sortinit}{H}
+      \field{sortinithash}{23a3aa7c24e56cfa16945d55545109b5}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{International Journal on Advances in Software}
+      \field{number}{3\&4}
+      \field{title}{Designing microservice-based applications by using a domain-driven design approach}
+      \field{volume}{10}
+      \field{year}{2017}
+      \field{pages}{432\bibrangedash 445}
+      \range{pages}{14}
+    \endentry
+    \entry{http_benchmark}{misc}{}{}
+      \field{sortinit}{H}
+      \field{sortinithash}{23a3aa7c24e56cfa16945d55545109b5}
+      \field{labeltitlesource}{title}
+      \field{title}{{Http benchmark}}
+      \field{urlday}{10}
+      \field{urlmonth}{4}
+      \field{urlyear}{2023}
+      \field{urldateera}{ce}
+      \verb{urlraw}
+      \verb https://www.techempower.com/benchmarks/#section=data-r21&hw=ph&test=json
+      \endverb
+      \verb{url}
+      \verb https://www.techempower.com/benchmarks/#section=data-r21&hw=ph&test=json
+      \endverb
+    \endentry
+    \entry{mkdocs}{misc}{}{}
+      \field{sortinit}{M}
+      \field{sortinithash}{4625c616857f13d17ce56f7d4f97d451}
+      \field{urlday}{13}
+      \field{urlmonth}{7}
+      \field{urlyear}{2023}
+      \field{urldateera}{ce}
+      \verb{urlraw}
+      \verb https://www.mkdocs.org/
+      \endverb
+      \verb{url}
+      \verb https://www.mkdocs.org/
+      \endverb
+    \endentry
+    \entry{pingora}{misc}{}{}
+      \field{sortinit}{P}
+      \field{sortinithash}{ff3bcf24f47321b42cb156c2cc8a8422}
+      \field{labeltitlesource}{title}
+      \field{title}{{Pingora}}
+      \field{urlday}{10}
+      \field{urlmonth}{4}
+      \field{urlyear}{2023}
+      \field{urldateera}{ce}
+      \verb{urlraw}
+      \verb https://blog.cloudflare.com/how-we-built-pingora-the-proxy-that-connects-cloudflare-to-the-internet/
+      \endverb
+      \verb{url}
+      \verb https://blog.cloudflare.com/how-we-built-pingora-the-proxy-that-connects-cloudflare-to-the-internet/
+      \endverb
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+
