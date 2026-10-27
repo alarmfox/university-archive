@@ -4,7 +4,6 @@ using namespace std;
 #define N 100
 #define M 100
 
-
 void print_matrix(int mat[N][M], int n, int m) {
   for (int i = 0; i < n; ++i) {
     for (int j = 0; j < m; ++j) {
@@ -20,7 +19,7 @@ bool is_valid(int mat[N][M], int n, int m, int i, int j, int pvalue, bool visite
   // controllo dei confini
   if (!is_in(i, 0, n) || !is_in(j, 0, m)) {
     return false;
-  } 
+  }
 
   // controllo se la mossa è stata già eseguita
   if(visited[i][j]) {
@@ -28,7 +27,7 @@ bool is_valid(int mat[N][M], int n, int m, int i, int j, int pvalue, bool visite
   }
 
   return pvalue < mat[i][j];
-  
+
 }
 
 void _find_increasing_path(int mat[N][M], int n, int m, int i, int j, bool visited[N][M], int& current, int &res) {
@@ -66,17 +65,17 @@ void _find_increasing_path(int mat[N][M], int n, int m, int i, int j, bool visit
   if (is_valid(mat, n, m, i-1, j+1, mat[i][j], visited)) {
     _find_increasing_path(mat,n, m, i-1, j+1, visited, current, res);
   }
-  
+
   // basso sinistra
   if (is_valid(mat, n, m, i+1, j-1, mat[i][j], visited)) {
     _find_increasing_path(mat,n, m, i+1, j-1, visited, current, res);
   }
-  
+
   // basso destra
   if (is_valid(mat, n, m, i+1, j+1, mat[i][j], visited)) {
     _find_increasing_path(mat,n, m, i+1, j+1, visited, current, res);
   }
-  
+
   visited[i][j] = false;
   current --;
 }
@@ -97,7 +96,7 @@ int find_increasing_path(int mat[N][M], int n, int m) {
 }
 
 int main (int argc, char *argv[]) {
-  
+
   int test_cases [3][N][M] = {
     {
       {1,2,4},
@@ -110,7 +109,7 @@ int main (int argc, char *argv[]) {
       {4,0,20},
       {2,3,1},
     },
-  
+
     {
       {5,2,4},
       {6,9,1},

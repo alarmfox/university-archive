@@ -22,14 +22,14 @@ struct heap {
     for (int i = 0; i < v.size(); i++) {
       keys[i] = v[i];
     }
-  
+
   }
   ~heap() {
     heap_size = capacity = 0;
     delete []keys;
     keys = nullptr;
   }
-  
+
   static int parent(int i) {
     return (i-1)/2;
   }
@@ -85,7 +85,7 @@ struct heap {
   }
 
 };
-  
+
 void build_max_heap(struct heap *h) {
   h->heap_size = h->capacity;
   for (int i = h->capacity / 2; i >= 0; --i) {
@@ -130,6 +130,6 @@ int main (int argc, char *argv[]) {
     }
     cout << endl;
   }
-  
+
   return 0;
 }

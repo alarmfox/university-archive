@@ -11,37 +11,35 @@ void print_array(const int a[], const int n) {
 int max_sum_increasing_subsequence(const int arr[], const int n) {
 
   int res = INT_MIN;
-	int dp[n];
+  int dp[n];
 
   // inizializzazione vettore dp
-	for (size_t i = 0; i < n; ++i) {
-		dp[i] = arr[i];
+  for (size_t i = 0; i < n; ++i) {
+    dp[i] = arr[i];
   }
 
   // calcolo della somma massima per la sottosequenza che termina in i-esima posizione
-	for (size_t i = 1; i < n; ++i) {
+  for (size_t i = 1; i < n; ++i) {
     for (size_t j = 0; j < i; ++j) {
       // sono in una sottosequenza crescente?
       if (arr[i] > arr[j]) {
-        // incremento la somma
-        dp[i] = max(dp[i], dp[j] + arr[i]);
+	// incremento la somma
+	dp[i] = max(dp[i], dp[j] + arr[i]);
       }
     }
   }
 
   // calcolo del valore massimo
-	for (size_t i = 0; i < n; ++i) {
-		if (res < dp[i]) {
-			res = dp[i];
+  for (size_t i = 0; i < n; ++i) {
+    if (res < dp[i]) {
+      res = dp[i];
     }
   }
 
-	return res;
+  return res;
 }
 
 int main (int argc, char *argv[]) {
-  
-  
   vector<vector<int>> test_cases = {
     {
       10,5,14,3,

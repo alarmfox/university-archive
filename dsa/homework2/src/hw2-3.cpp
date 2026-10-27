@@ -2,9 +2,8 @@
 using namespace std;
 
 int min_square(const int n) {
-  
   // inizializzo il vettore dp
-	int dp[n+1];
+  int dp[n+1];
 
   dp[0] = 0;
   dp[1] = 1;
@@ -20,7 +19,6 @@ int min_square(const int n) {
 }
 
 int main (int argc, char *argv[]) {
-  
   vector<int> test_cases = {
     100,
     25,

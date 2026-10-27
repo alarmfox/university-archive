@@ -11,7 +11,7 @@ void swap(int *a, int *b) {
 
 void print_array(int *arr, int n) {
   for(int i = 0; i < n; ++i) {
-    cout << arr[i] << ' '; 
+    cout << arr[i] << ' ';
   }
   cout << endl;
 }
@@ -32,7 +32,7 @@ struct heap {
     delete []keys;
     keys = nullptr;
   }
-  
+
   static int parent(int i) {
     return (i-1)/2;
   }
@@ -91,7 +91,7 @@ struct heap {
     if(heap_size < 1) {
       cout << "heap empty" << endl;
       return INT_MAX;
-    } 
+    }
 
     if (heap_size == 1) {
       heap_size--;
@@ -117,7 +117,6 @@ struct heap {
 
 };
 
-
 void sort_k(int arr[], int n, int k) {
   int size = (n == k) ? k : k + 1;
 
@@ -138,9 +137,6 @@ void sort_k(int arr[], int n, int k) {
     arr[index++] = h.extract_min();
   }
 }
-
-
-
 
 int main (int argc, char *argv[]) {
   int test_cases[3][5] = {
@@ -165,6 +161,5 @@ int main (int argc, char *argv[]) {
     print_array(test_cases[i], 5);
 
   }
-  
   return 0;
 }

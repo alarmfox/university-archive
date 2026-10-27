@@ -7,7 +7,7 @@ void print_sol(int sol[], int p[], int n) {
     sum += p[sol[i]];
     cout << p[sol[i]] << ' ';
   }
-  cout << "sol=" << sum << endl; 
+  cout << "sol=" << sum << endl;
 }
 
 vector<int> knapsack(const int w[], const int p[], int n, int c) {
@@ -38,13 +38,11 @@ vector<int> knapsack(const int w[], const int p[], int n, int c) {
 
   res = dp[n][c];
   for (size_t i = n, j = c; i > 0 && res > 0; i--) {
-    
     if (res == dp[i-1][j]) {
-     continue;   
-    } 
+      continue;
+    }
     // l'elemento è incluso
     sol.push_back(i-1);
-              
     // si decrementa res e j per saltare ad un altra colonna
     res -= p[i-1];
     j -= w[i-1];
@@ -69,6 +67,6 @@ int main (int argc, char *argv[]) {
     vector<int> sol = knapsack(w.data(), w.data(), w.size(), c);
     print_sol(sol.data(), w.data(), sol.size());
   }
-  
+
   return 0;
 }

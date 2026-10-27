@@ -1,0 +1,971 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{array}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}m{#1}}
+\usepackage{amsmath}
+\usepackage{relsize}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{hyperref}
+\usepackage{tikz}
+\usepackage{tocloft}
+\usepackage[explicit]{titlesec}
+\usepackage[margin=1in]{geometry}
+\usetikzlibrary{trees}
+
+\renewcommand{\contentsname}{Indice}
+\renewcommand\cftaftertoctitle{\hfill\mbox{}}
+
+\titleformat{\section}{\normalfont\Large\bfseries}{}{0em}{#1\ \thesection}
+
+\lstset{
+    language=C++,
+    basicstyle=\ttfamily,
+    keywordstyle=\color{blue}\ttfamily,
+    stringstyle=\color{red}\ttfamily,
+    commentstyle=\color{green}\ttfamily,
+    morecomment=[l][\color{magenta}]{\#},
+    numbers=left,
+    stepnumber=1,
+    showstringspaces=false,
+    tabsize=1,
+    breaklines=true,
+    breakatwhitespace=false,
+}
+
+\usepackage[noabbrev]{cleveref}
+
+\crefformat{section}{\S#2#1#3}
+\crefformat{subsection}{\S#2#1#3}
+\crefformat{subsubsection}{\S#2#1#3}
+\crefformat{figure}{#2Figura~#1#3}
+\crefformat{footnote}{#2\footnotemark[#1]#3}
+\crefformat{table}{#2Tabella~#1#3}
+\crefformat{equation}{#2Equazione~#1#3}
+\crefformat{chapter}{#2Capitolo~#1#3}
+
+\begin{document}
+
+\begin{titlepage}
+    \begin{center}
+        \vspace*{1cm}
+
+        \Huge
+        \textbf{Corso di Algoritmi e Strutture Dati}
+
+        \vspace{0.5cm}
+        \LARGE
+        Homework
+
+        \vfill
+        \vspace{0.8cm}
+
+        \Large
+        Capasso Giuseppe - M63001498
+
+    \end{center}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+\addcontentsline{toc}{section}{Richiami teorici}
+\subsection*{Richiami teorici}
+Nello svolgimento degli esercizi sono stati utilizzati i seguenti concetti teorici.
+
+\paragraph{Notazione $O$}
+Data una funzione $g(n)$, $O(g(n))$ indica un insieme di funzioni $f(n)$ in cui:
+\begin{equation}
+    O(g(n)) = \{f(n): \exists c > 0, \exists m > 0: f(n) \leq c\cdot g(n), \; \forall n \geq m\}
+\end{equation}
+
+\paragraph{Notazione $\Omega$}
+Data una funzione $g(n)$, $\Omega(g(n))$ indica un insieme di funzioni $f(n)$ in cui:
+\begin{equation}
+    \Omega(g(n)) = \{f(n): \exists c > 0, \exists m > 0: f(n) \geq c\cdot g(n), \; \forall n \geq m\}
+\end{equation}
+
+\paragraph*{Notazione $\Theta$}
+Data una funzione $g(n)$, $\Theta(g(n))$ indica un insieme di funzioni $f(n)$ in cui:
+\begin{equation}
+    \Theta(g(n)) = \{f(n): \exists c_1, c_2 > 0, \exists m > 0: c_1\cdot g(n) \leq f(n) \leq c_2\cdot g(n), \; \forall n \geq m\}
+    \label{eq:theta}
+\end{equation}
+
+\paragraph{Relazioni di dominanza elementari}
+Dette $p < r$, $h < k$, $a < b$, valgono le seguenti relazioni per i problemi computazionali:
+\begin{align*}
+     O(1) &\subset O(log^r(n)) \subset O(log^p(n)) \subset O(n^h) \subset O(n^h \cdot log^r(n))\\ 
+     &\subset O(n^h \cdot log^p(n)) \subset O(n^k) \subset O(a^n) \subset O(b^n) \subset O(n!)
+\end{align*}
+
+\paragraph{Proprietà di $O$}
+In termini di $O$, valgono le seguenti proprietà:
+\begin{itemize}
+    \item \textbf{Sequenza di algoritmi}
+    \begin{equation}
+        f(n) + g(n) = O(max(f(n), g(n)))
+        \label{eq:alg-seq}
+    \end{equation}
+    \item \textbf{Eliminazione delle costanti}
+    \begin{equation}
+        O(c f(n)) = O(f(n))
+        \label{eq:const-elim}
+    \end{equation}
+    \item \textbf{Cicli annidati}
+    \begin{equation}
+        O(f(n)) \cdot O(g(n)) = O(f(n) \cdot g(n))
+        \label{eq:nested-loops}
+    \end{equation}
+
+    \item \textbf{Riflessività}
+    \begin{equation}
+     O(f(n)) = f(n)
+     \label{eq:reflex}
+    \end{equation}
+\end{itemize}
+
+\paragraph{Serie matematiche note}
+\begin{equation}
+    \mathlarger{\sum}_{i=0}^{\infty}(x^i) = \frac{1}{1-x} \quad con\; 0\leq x<1
+    \label{eq:geometric_sum}
+\end{equation}
+
+\begin{equation}
+    \mathlarger{\sum}_{i=0}^{\infty}(i\cdot x^i) = \frac{x}{(1-x)^2} \quad con\; 0\leq x<1
+    \label{eq:sum}
+\end{equation}
+
+\paragraph{Teorema dell'esperto}\label{s:master-th}
+Data una ricorrenza nella forma $T(n) = aT\left(\frac{n}{b}\right) + f(n))$ e, detto $\alpha = \log_b(a)$, il teorema dell'esperto permette di calcolare facilmente un limite alla complessità delle ricorrenze, secondo la tabella sottostante:
+
+\begin{center}
+    \begin{tabular}{| C{0.75cm} | C{5.0cm} | C{5.0cm} |}
+        \hline
+        Caso & Condizione &  Risultato \\ [2ex]
+        \hline\hline
+        1 & $f(n) = O(n^{\alpha-\epsilon}), \epsilon > 0$ & $T(n) = \Theta(n^\alpha)$ \\  [2ex]
+        \hline
+        2 & $f(n) = \Theta(n^\alpha)$ & $T(n) = \Theta(n^\alpha\cdot\log(n))$ \\ [2ex]
+        \hline
+        3 & $f(n) = \Omega(n^{c+\epsilon})$ e $a f(n/b)\leq cf(n)\; con\; c<1$ & $T(n) = \Theta(f(n))$ \\ [2ex]
+        \hline
+    \end{tabular}
+\end{center}
+
+\paragraph{Ricorrenze lineari di ordine costante}\label{s:linaer-rec}
+Siano $a_1, a_2, \dots, a_h$ costanti intere non negative con $h > 0$, $c, b \in R$ tali che $c > 0$ e $\beta \geq 0$ e sia definita la ricorrenza $T(n)$:
+\begin{equation*}
+    T(n) = \begin{cases}
+        \sum_{1\leq i \leq h} (a_i T(n-i) + cn^\beta & n \geq m\\
+        \Theta(1) & n < m
+    \end{cases}
+\end{equation*}
+
+Detto $a = \sum_{1\leq i \leq h}(a_i)$, allora è possibile affermare che:
+\begin{equation*}
+    T(n) = \begin{cases}
+        \Theta(n^{\beta+1}) &\text{se} \; a = 1\\
+        \Theta(a^n n^{\beta}) &\text{se}\; a\geq 1\\
+    \end{cases}
+\end{equation*}
+\clearpage
+\section{Homework}
+\subsection{Notatione asintotica}
+
+Per ognuna delle seguenti affermazioni, si dica se essa è sempre vera, mai vera, o a volte
+vera, per funzioni asintoticamente non-negative. Se la si considera sempre vera o mai vera,
+si spieghi il perché. Se è a volte vera, si dia un esempio per cui è vera e uno per cui è falsa.
+
+\subsection*{A. $f(n) = O(f(n)^2)$}
+La relazione risulta sempre vera in accordo con l'ipotesi di funzioni asintoticamente non negative. Infatti, applicando la definizione \textit{Big O}, si ottiene:
+\begin{equation*}
+    \exists c > 0, \exists m \geq 0: \; f(n)\leq c f^2(n)\; \forall n\geq m
+\end{equation*}
+che risulta sempre vera per $c=1$ per tutte le funzioni monotone crescenti.
+
+\subsection*{B. $f(n) + O(f(n)) = \Theta(f(n))$}
+Applicando la proprietà di riflessività secondo la quale $O(f(n)) = f(n)$, è possibile scrivere:
+\begin{equation*}
+    f(n) + O(f(n)) = 2f(n) = \Theta(f(n))
+\end{equation*}
+A questo punto, applicando nuovamente la proprietà di riflessività e quella per l'eliminazione delle costanti , si può scrivere che:
+\begin{equation*}
+   2f(n) = \Theta(2f(n)) = \Theta(f(n))
+\end{equation*}
+Quindi l'affermazione risulta vera nel caso in cui $f(n)$ sia una funzione asintoticamente non-negativa.
+
+\subsection*{C. $f(n) = \Omega(g(n))$ e $f(n) = o(g(n))$}
+L'affermazione risulta falsa perché il simbolo \textit{o-piccolo} non include l'uguaglianza. Infatti, applicando la definizione \textit{Omega}, si ottiene:
+\begin{equation*}
+    \exists c > 0, \exists m \geq 0: \; f(n)\geq c\cdot g(n)\; \forall n\geq m
+\end{equation*}
+Mentre, usando quella di \textit{o-piccolo}, si ha che:
+\begin{equation*}
+    \exists c > 0, \exists m \geq 0: \; f(n) < c \cdot g(n)\; \forall n\geq m
+\end{equation*}
+La condizione \textit{and} non è mai verificata per nessun valore di $c$ in quanto o $f(n) \geq g(n)$ o $f(n) < g(n)$.
+Invece, se al posto di $o(g(n))$ ci fosse stato $O(g(n))$, allora la relazione sarebbe stata vera in quanto se $f(n) = \Omega (g(n))$ e $f(n) = O(g(n))$ allora $f(n) = \Theta(g(n))$.
+
+\clearpage
+\subsection{Notazione asintotica e crescita delle funzioni}
+Per ognuna delle seguenti coppie di funzioni $f(n)$ e $g(n)$, trovare una appropriata costante positiva $c$ tale che $f(n) \leq c \cdot g(n)$ per tutti i valori di $n > 1$.
+
+\subsection*{A. $f(n) = n^2 + n + 1$, $g(n) = 2n^3$}
+Sfruttando il fatto che $n > 1$, è possibile scrivere che:
+\begin{align*}
+    f(n) &= n^2 + n + 1\\
+  &\leq n^3 + n + 1\\
+  &\leq n^3 + n^3 + 1\\
+  &\leq n^3 + n^3 + n^3\\
+  &= 3n^3\\
+  &\leq c\cdot g(n) \\
+  &=c \cdot 2n^3
+\end{align*}
+
+Quindi, bisogna risolvere la relazione $3n^3 \leq c \cdot 2n^3$ che risulta vera per $c \geq \frac{3}{2}$.
+
+\subsection*{B. $f(n) = n\sqrt{n} + n^2$, $g(n) = n^2$}
+Essendo $n > 1$, è possibile scrivere che:
+\begin{align*}
+    f(n) &= n\sqrt{n} + n^2\\
+  &\leq n^2 + n^2\\
+  &= 2n^2\\
+  &\leq c\cdot g(n) \\
+  &=c \cdot n^2
+\end{align*}
+
+Da cui si ottiene la disequazione $2n^2 \geq cn^2$ che risulta vera per $c \geq 2$.
+
+\subsection*{C. $f(n) = n^2 - n + 1$, $g(n) = \frac{n^2}{2}$}
+Essendo $n > 1$, è possibile maggiorare $f(n)$ come segue:
+\begin{align*}
+    f(n) &= n^2 - n + 1\\
+  &\leq n^2 +1 \quad \text{essendo $n > 1$, basta eliminare $-n$ per rendere vera la maggiorazione}\\
+  &\leq n^2 + n^2 \\
+  &= 2n^2\\
+  &\leq c\cdot g(n) \\
+  &=c \cdot \frac{n^2}{2}
+\end{align*}
+
+Quindi il problema si riduce a risolvere la disequazione $2n^2 \leq c\cdot \frac{n^2}{2}$ che risulta vera per $c \geq 4 $.
+
+\clearpage
+\subsection{Complessità}
+Dimostrare che per qualsiasi costante reale $a$ e $b$, con $b > 0$, $(n+a)^b = \Theta(n^b)$.\\
+\paragraph{Dimostrazione}
+Per dimostrare la relazione, si osserva che l'operazione\\ $(n+a)^b$ genera sempre un polinomio di grado $b$ che può essere scritto nella forma:
+\begin{equation}
+    f(n) = n^b + c_{b-1}n^{b-1}+\ldots+c_1n+c_0
+    \label{eq:polinomio}
+\end{equation}
+
+Quindi dimostrare che $(n+a)^b = \Theta(n^b)\;,b > 0$ equivale a provare che $f(n)= \Theta(n^b)$, dove con $f(n)$ si indica il polinomio in \cref{eq:polinomio}.
+
+Applicando la definizione di $\Theta$ (\cref{eq:theta}), si procede con il dimostrare prima il limite superiore e poi quello inferiore.
+
+\paragraph{Limite superiore} Bisogna dimostrare che $\exists c_2 > 0, \exists m > 0: f(n) \leq c_2\cdot n^b, \forall n \geq m$. Supponendo $n \geq 1$, si può scrivere che:
+\begin{align*}
+    f(n)&= n^b+c_{b-1}n^{b-1}+\ldots+c_1n+c_0\\
+    &\leq n^b+|c_{b-1}|n^{b-1}+\ldots+|c_1|n+|c_0|\\
+    &\leq (1+|c_{b-1}|+\ldots+|c_1|+|c_0|)n^b\\
+    &\leq c_2\cdot n^b
+\end{align*}
+
+La relazione risulta vera per $c_2 \geq 1+|c_{b-1}|+\ldots+|c_1|+|c_0| $
+
+\paragraph{Limite inferiore} Analogamente al limite superiore, bisogna dimostrare che $\exists c_2 > 0, \exists m > 0: f(n) \geq c_1\cdot n^b, \forall n \geq m$, si può scrivere che:
+
+\begin{align*}
+    f(n)&= n^b+c_{b-1}n^{b-1}+\ldots+c_1n+c_0\\
+    &\geq n^b-|c_{b-1}|n^{b-1}-\ldots-|c_1|n-|c_0|\\
+    &\geq (n-|c_{b-1}|-\ldots-|c_1|-|c_0|)n^{(b-1)}\\
+    &\geq c_1\cdot n^b
+\end{align*}
+
+La disequazione è soddisfatta se $c_1 \leq (1 - \frac{|c_{b-1}|+\ldots+|c_1|+|c_0|}{n}) $
+
+Quindi avendo dimostrato che esistono $c_1,c_2 > 0$ tale che $c_1\cdot n^b\leq f(n) \leq c_2 \cdot n^b$, allora è possibile affermare che $f(n) = \Theta(n^b)$.
+
+\clearpage
+\subsection{Ricorrenze}
+Fornire il limite inferiore e superiore per $T(n)$ nella seguente ricorrenza, usando il metodo dell’albero delle ricorrenze ed il teorema dell’esperto se applicabile. Si fornisca il limite più stretto possibile giustificando la risposta.
+
+\subsection*{A. $T(n) = 2T(\frac{n}{3})+n\cdot \log n$}
+\paragraph{Soluzione con albero di ricorrenza}\mbox{}\\
+
+Di seguito, è mostrato l'albero di ricorrenza generato da $T(n)$.
+
+\begin{tikzpicture}[level 1/.style={sibling distance=5.6cm},level 2/.style={sibling distance=3cm},level 3/.style={sibling distance=2cm}]
+	\node {$cn$}[edge from parent fork down]
+		child { node {$c(n/3)$}
+			child { node {$c(n/9)$}
+			    child {node{...}}
+			    child {node{...}}
+			    }
+			child { node {$c(n/9)$}
+			    child {node{...}}
+			    child {node{...}}
+			    }
+			}
+		child { node {$c(n/3)$}
+			child { node {$c(n/9)$}
+			    child {node{...}}
+			    child {node{...}}
+			    }
+			child { node {$c(n/9)$}
+			    child {node{...}}
+			    child {node{...}}
+			    }
+			}
+	;
+\end{tikzpicture}\mbox{}\\
+L'albero di ricorrenza può essere schematizzato secondo la tabella sottostante, che rappresenta per ogni livello qual è la dimensione del problema, il costo di ciascuna chiamata, il numero di chiamate ricorsive e il costo totale di livello (ottenuto moltiplicando il numero di chiamate per il costo di chiamate).
+
+Al livello \textit{i-esimo} ci sono $2^i$ chiamate (nodi nell'albero) ciascuno dei quali con costo $n/3^i$. La ricorsione termina quando si raggiunge il caso base $T(1)$ ovvero quando $l = n/3^i = 1 \rightarrow i = \log_3 n$.
+
+\begin{center}
+    \begin{tabular}{| C{1.5cm} | C{1.7cm} | C{2.7cm} | C{1.5cm} | C{3.6cm} |}
+        \hline
+        Livello & Dimensione &  Costo Chiamata & Num. Chiamate & Costo Livello \\
+        \hline\hline
+        $0$ & $n$ & $n \log n$ & $1$ & $n \log n$\\
+        \hline
+        $1$ & $(n/3)$ & $n/3 \log (n/3)$ & $2$ & $2 (n/3) \log (n/3)$\\[7pt]
+        \hline
+        $2$ & $(n/3^2)$ & $n/3^2 \log (n/3^2)$ & $2^2$ & $2^2 (n/3^2) \log (n/3^2)$\\[7pt]
+        \hline
+        \dots & \dots & \dots & \dots & \dots \\
+        \hline
+        $i$ & $(n/3^i)$ & $n/3^i \log (n/3^i)$ & $2^i$ & $2^i (n/3^i) \log (n/3^i)$\\[7pt]
+        \hline
+        \dots & \dots & \dots & \dots & \dots \\
+        \hline
+        $l-1$ & $(n/3^{l-1})$ & $n/3^{l-1} \log (n/3^{l-1})$ & $2^{l-1}$ & $2^{l-1}(n/3^{l-1}) \log (n/3^{l-1})$\\[7pt]
+        \hline
+        $l = \log_3 n$ & $1$ & $T(1)$ & $2^l$ & $2^l$\\[7pt]
+        \hline
+    \end{tabular}
+\end{center}
+
+Per ottenere il costo totale dell'algoritmo bisogna sommare i costi di tutti i livelli:
+\begin{equation*}
+    T(n) = \sum_{i=0}^{\log_3n-1} \left(2^i \frac{n}{3^i} \log \frac{n}{3^i}\right) + 2^{\log_3 n}
+\end{equation*}
+Applicando la proprietà $\log(a/b) = \log(a) - \log (b)$, si ottiene:
+
+\begin{equation*}
+    T(n) = n \left[\log(n)\sum_{i=0}^{\log_3n-1} \left(\frac{2}{3}\right)^i - \log3 \sum_{i=0}^{\log_3n-1} i \cdot \left(\frac{2}{3}\right)^i \right] + 2^{\log_3 n}
+\end{equation*}
+
+Applicando le sommatorie note (\cref{eq:geometric_sum} e \cref{eq:sum}) e la proprietà $a^{\log_b c} = c ^{\log_b a}$, si ottiene:
+
+\begin{align*}
+     T(n) &= n \left[\log(n)\sum_{i=0}^{\log_3n-1} \left(\frac{2}{3}\right)^i - \log3 \sum_{i=0}^{\log_3n-1} i \cdot \left(\frac{2}{3}\right)^i \right] + 2^{\log_3 n}\\
+    &\leq n \log(n) \left(\frac{1}{1-2/3}\right) - n \frac{2/3}{(1-2/3)^2} + n^{\log_3 2} \\
+    &= 3n\log(n) - 6n + n^{\log_3 2}\\
+\end{align*}
+
+Usando la notazione $big-O$, applicando la proprietà di eliminazione delle costanti e le relazioni di dominanza elementari, si ottiene;
+
+\begin{align*}
+    T(n) &= 3n\log(n) - 6n + n^{\log_3 2}\\
+    &=O(3n\log n  - 6n + n^{\log_3 2})\\
+\end{align*}
+
+Quindi il costo dell'algoritmo è $T(n) = O(n\log n)$.
+
+\paragraph{Soluzione con il teorema dell'esperto}
+Secondo il teorema dell'esperto, si individuano i valori $a = 2$ e $b = 3$ da cui si ottiene che $\alpha = \log_b a = \log_3 2 \approx 0.63$; mentre $f(n) = n \log n$. Possono essere esclusi i casi 1 e 2 del teorema dell'esperto poiché $f(n) = n \log n \neq O(n^{0.63-\epsilon})$ (caso 1) in quanto $\epsilon > 0$ e sicuramente \textbf{non} vale la relazione  $f(n) = n \log n = \Theta(n^{0.63})$.
+Invece, per il caso 3, si può provare che  $$f(n) = n \log n = \Omega(n^{0.63+\epsilon})$$ che risulta vera per $\epsilon < 1 - \alpha \approx 0.37$. Inoltre, bisogna provare che:
+\begin{equation*}
+    \exists c \leq 1: \exists m \geq 0: a f\left(\frac{n}{b}\right) \leq c\cdot f(n)
+\end{equation*}
+
+\begin{align*}
+    af\left(\frac{n}{b}\right) &= 2 \frac{n}{3} \log \left(\frac{n}{3}\right)\\
+  &=  2 \frac{n}{3} \log n - \log 3\\
+  &\leq 2 \frac{n}{3} \log n\\
+  &\leq c \cdot n  \log n
+\end{align*}
+
+Da cui si ricava che $c \geq \frac{2}{3}$. Quindi, dimostrate le ipotesi del caso 3 del teorema dell'esperto, si può affermare che $T(n) = \Theta(n \cdot \log n)$.
+
+\subsection*{B. $T(n) = 3T(\frac{n}{5})+\log^2 n$}
+\paragraph{Soluzione con albero di ricorrenza}\mbox{}\\
+
+Di seguito, è mostrato l'albero di ricorrenza generato da $T(n)$ (semplificato per motivi di spazio).
+
+\begin{tikzpicture}[level 1/.style={sibling distance=3.5cm},level 2/.style={sibling distance=2.5cm},level 3/.style={sibling distance=0.85cm}]
+	\node {$cn$}[edge from parent fork down]
+        
+    child { node {$c(n/5)$}
+        child { node {$c(n/25)$} 
+              child {node{...}}
+			    child {node{...}}
+              child {node{...}}
+       }
+        child { node {$c(n/25)$}
+          child {node{...}}
+			child {node{...}}
+          child {node{...}}
+        }
+        child { node {$c(n/25)$}
+          child {node{...}}
+			child {node{...}}
+          child {node{...}}
+        }
+    }
+    child { node {$c(n/5)$}}
+    child { node {$c(n/5)$}};
+\end{tikzpicture}\\
+L'albero di ricorrenza è schematizzato nella tabella sottostante.
+\begin{center}
+    \begin{tabular}{| C{1.5cm} | C{1.7cm} | C{2.7cm} | C{1.5cm} | C{3.6cm} |}
+        \hline
+        Livello & Dimensione &  Costo Chiamata & Num. Chiamate & Costo Livello \\ 
+        \hline\hline
+        $0$ & $n$ & $n \log^2 n$ & $1$ & $\log^2 n$\\
+        \hline
+        $1$ & $(n/5)$ & $\log^2 (n/5)$ & $3$ & $3 \log (n/5)$\\[7pt]
+        \hline
+        $2$ & $(n/5^2)$ & $\log^2 (n/5^2)$ & $3^2$ & $3^2 \log^2 (n/5^2)$\\[7pt]
+        \hline
+        \dots & \dots & \dots & \dots & \dots \\
+        \hline
+        $i$ & $(n/5^i)$ & $\log^2 (n/5^i)$ & $3^i$ & $3^i \log^2 (n/5^i)$\\[7pt]
+        \hline
+        \dots & \dots & \dots & \dots & \dots \\
+        \hline
+        $l-1$ & $(n/5^{l-1})$ & $\log^2 (n/5^{l-1})$ & $3^{l-1}$ & $3^{l-1}\log^2 (n/5^{l-1})$\\[7pt]
+        \hline
+        $l = \log_5 n$ & $1$ & $T(1)$ & $3^l$ & $3^l$\\[7pt]
+        \hline
+    \end{tabular}
+\end{center}
+Al livello \textit{i-esimo} ci sono $3^i$ nodi ciascuno dei quali con costo $n/5^i$. Il caso base viene raggiunto quando  $n/5^i = 1 \rightarrow i = \log_5 n$.  Il costo di ciascuna chiamata è dato da $\log^2 n$ e, quindi, il costo al livello \textit{i-esimo} è $3^i\log^2 n/5^i$. Quindi il costo totale dell'algoritmo è dato da:
+\begin{equation*}
+    \sum_{i=0}^{\log_5 n-1} \left(3^i\log^2 (n/5^i)\right) + 3^{\log_5 n}
+\end{equation*}
+
+Attraverso passaggi algebrici analoghi a quelli dell'esercizio precedente si ottiene:
+\begin{align*}
+    T(n) &= \sum_{i=0}^{\log_5 n-1} (3^i\log^2 n) -  \sum_{i=0}^{\log_5 n-1} (3^i\log^2 (5^i)) + n^{\log_5 3} \\
+    &= \log^2 n \sum_{i=0}^{\log_5 n-1} (3^i) - \log^2 5 \sum_{i=0}^{\log_5 n-1} (i 3^i) + n^{\log_5 3}
+\end{align*}
+
+È possibile maggiorare $T(n)$ ottenuta eliminando il termine negativo centrale:
+
+\begin{align*}
+    T(n) &= \log^2 n \sum_{i=0}^{\log_5 n-1} (3^i) - \log^2 5 \sum_{i=0}^{\log_5 n-1} (i 3^i) + n^{\log_5 3}\\
+    &\leq \log^2 n \sum_{i=0}^{\log_5 n-1} (3^i) + n^{\log_5 3}
+\end{align*}
+
+Essendo $\log_5 n$ una quantità finita, si può affermare che la sommatoria al primo termine ha un valore finito $M$. Sapendo che $\log_5 3 \approx 0.68$ si può scrivere che:
+
+\begin{align*}
+    T(n) &\leq \log^2 n \sum_{i=0}^{\log_5 n-1} (3^i) + n^{\log_5 3}\\
+    &= M\log^2 n + n^{0.68}\\
+    &= O(M\log^2 n + n^{0.68})
+\end{align*}
+
+Applicando la proprietà \cref{eq:alg-seq} e la relazione di dominanza si può affermare che:
+\begin{equation*}
+    T(n) = O(n^{0.68})
+\end{equation*}
+
+
+\paragraph{Soluzione con il teorema dell'esperto}
+Secondo il teorema dell'esperto, si individuano i valori $a = 3$ e $b = 5$ da cui si ottiene che $\alpha = \log_b a = \log_5 3 \approx 0.68$; mentre $f(n) = \log^2 n$. In questo caso, è possibile applicare il caso 1 del teorema dell'esperto, in quanto $f(n) = O(n^{(0.68-\epsilon)}), \epsilon > 0$. Infatti, bisogna verificare che $$f(n) = \log^2 n \leq c n^{0.68}$$ come mostrato nei seguenti passaggi:
+\begin{align*}
+    \log^2 n &\leq c n^{0.68} \quad \text{si elevano entrambi i membri alla $\frac{1}{2}$}\\
+    \log n &\leq c_1 n^{0.34} \quad \text{con $c_1 =\sqrt{c} $}\\
+    2^{\log n} &\leq 2^{c_1 n^{0.34}} \quad \text{si elimina il logaritmo}\\
+    n &\leq n^{c_1 2^{0.34}} \\
+    n &\leq n^{c_11.266}
+\end{align*}
+
+che risulta vera per $c_1 \geq 1$. Quindi applicando il caso 1 del teorema dell'esperto, si ottiene che $T(n) = \Theta(n^{\log_5 3}) \approx \Theta(n^{0.68})$.
+
+\clearpage
+
+\subsection{Problema 1}
+Si implementi un algoritmo di ordinamento che sfrutta l’inserimento e la visita in un albero
+binario di ricerca. Dato un vettore di n numeri interi in input, l’algoritmo procede prima ad inserire i numeri in un albero binario di ricerca (usando ripetutamente TREE-INSERT per
+inserire i numeri uno alla volta), e poi stampa i numeri in ordine con un attraversamento in
+ordine simmetrico dell’albero. Si analizzi la complessità nel caso peggiore e nel caso
+migliore di per questo algoritmo di ordinamento.
+
+\paragraph{Soluzione}
+L'implementazione prevede la creazione di una struttura dati \textit{Node} che rappresenta il nodo di un albero al cui interno sono memorizzati i riferimenti al figlio destro, quello sinistro e la chiave, come mostrato nel listato di seguito.
+
+\begin{lstlisting}[caption={Nodo di un albero binario di ricerca},captionpos=b]
+struct node {
+    node *left;
+    node *right;
+    int key;
+};
+
+\end{lstlisting}
+Sono state progettate 2 funzioni \textit{insert} e \textit{in\_order\_print} per inserire gli elementi nell'albero e stamparli in ordine da sinistra verso destra.
+
+\begin{lstlisting}[caption={Procedura di inserimento in un BST},captionpos=b]
+void insert(struct node **root, struct Node *z) {
+  struct node *y = nullptr;
+  struct node *x = *root;
+
+  while (x != nullptr) {
+    y = x;
+    if (z->key < x->key) {
+      x = x->left;
+    } else {
+      x=x->right;
+    }
+  }
+
+  if (y == nullptr) {
+    *root = z;
+  } else if (z->key < y->key) {
+    y->left = z;
+  } else {
+    y->right = z;
+  }
+
+}
+
+void in_order_print(struct node *root) {
+  if (root != nullptr) {
+    in_order_print(root->left);
+    cout << root->key << ' ';
+    in_order_print(root->right);
+  }
+}
+
+\end{lstlisting}
+Infine, l'algoritmo risolutivo (semplificato) è riportato di seguito:
+
+\begin{lstlisting}[caption={Ordinamento di un albero mediante insert},captionpos=b]
+void solve(const vector<int>& a) {
+  struct node *tree = nullptr;
+  for (int i = 0; i < a.size(); ++i) {
+    insert(&tree, new Node(a[i]));
+  }
+
+  in_order_print(tree);
+}
+
+\end{lstlisting}
+
+\paragraph{Complessità}
+Detta $n$ la dimensione dell'input e posto $h = \log n$, è possibile calcolare la complessità dell'algoritmo utilizzando le proprietà dei cicli annidati e algoritmi in sequenza(\cref{eq:nested-loops} e \cref{eq:alg-seq}). In particolare, sapendo che l'inserimento all'interno di un \textbf{BST} ha complessità $O(h)$ e la visita in ordine è $\Theta(n)$, si può affermare che il \textit{loop} a riga \textit{3-5} ha una complessità $O(n\log n)$. Quindi il costo totale, nel caso medio, dell'algoritmo è $T(n) = O(n\log n) + \Theta(n) = O(n \log n)$. Nel caso pessimo, bisogna osservare che un albero non bilanciato come il BST può degenerare in una \textit{linked list} (ad esempio quando il vettore di input è già ordinato) e, pertanto, la procedura di inserimento diventa $O(n)$. Quindi, nel caso pessimo la complessità diventa $T(n) = O(n \cdot n) + \Theta(n) = O(n^2)$.
+\clearpage
+
+\subsection{Problema 2}
+Si implementi un algoritmo che, a partire da un vettore di n numeri interi in input, costruisce un heap chiamando ripetutamente la procedura MAX-HEAP-INSERT per inserire gli elementi nell’heap. L’algoritmo di costruzione ha il seguente
+pseudocodice:
+
+\begin{algorithm}
+    \begin{algorithmic}
+        \Procedure{BUILD-MAX-HEAP\_v2}{$A$}
+            \State $A.heap\_size \gets 1$
+            \For{$i=2\texttt{ to } A.length$}
+                \State $MAX-HEAP-INSERT(A, A[i])$
+            \EndFor
+        \EndProcedure
+    \end{algorithmic}
+\end{algorithm}
+
+Si confronti la BUILD-MAX-HEAP vista a lezione con la BUILD-MAX-HEAP\_v2, in
+particolare: le due procedure creano sempre lo stesso \textit{heap} se vengono eseguite con lo stesso \textit{array} di input? Dimostrare che lo fanno o fornite un controesempio.
+Dimostrare che, nel caso peggiore,\textit{BUILD-MAX-HEAP\_v2} richiedo un tempo $\Theta(n\log n)$ per costruire un \textit{heap} di n elementi.
+
+\paragraph{Soluzione} Per la soluzione si è implementata una struttura dati \textit{heap} che ha la seguente interfaccia:
+
+\begin{lstlisting}[caption={Interfaccia di un max heap},captionpos=b]
+struct heap {
+   size_t heap_size;
+   size_t capacity;
+   int *keys;
+
+   void max_heapify(const int i);
+   void heap_increase_key(int i, int key);
+   void max_heap_insert(const int k);
+
+}
+\end{lstlisting}
+Per implementare la procedura \textit{BUILD-MAX-HEAP\_v2}, è stato necessario implementare \textit{max\_heap\_insert} e \textit{heap\_increase\_key} riportate di seguito:
+
+\begin{lstlisting}[caption={Implementazione procedure di inserimento in un max heap},captionpos=b]
+void heap_increase_key(int i, int key) {
+    if (key < keys[i]) {
+      cout << "new key smaller then current key";
+      return;
+    }
+    keys[i] = key;
+    while(i > 0 && keys[heap::parent(i)] < keys[i]) {
+      swap(&keys[heap::parent(i)], &keys[i]);
+      i = heap::parent(i);
+    }
+}
+
+void max_heap_insert(const int k) {
+    heap_size += 1 ;
+    keys[heap_size - 1] = INT_MIN;
+
+    heap_increase_key(heap_size - 1, k);
+}
+
+\end{lstlisting}
+
+Le due procedure \textbf{non} producono lo stesso \textit{heap}: dato in input $(1,2,3,4,5,6)$, \textit{build\_max\_heap} produce $(6,5,3,4,2,1)$; mentre \ $(6,4,5,1,3,2)$.
+
+\paragraph{Complessità}
+Il caso peggiore dell'operazione \textit{build\_max\_heap\_v2} che si verifica quando il vettore è già ordinato in maniera decrescente. Infatti, in questo caso saranno effettuati $n$ \textit{swap}. In questa situazione, il costo $T(n)$ è:
+
+\begin{equation*}
+    T(n) = \sum_{i=2}^n \log i = \log (n) + \log (n-1) + \dots + \log (2) = \log (n!)
+\end{equation*}
+
+Usando l'approssimazione di \textbf{Stirling}:
+
+\begin{align*}
+    T(n) = \log (n!) &\approx \log \left(\sqrt{2\pi n} \left(\frac{n}{e}\right)^n \cdot \left(1 + \Theta\left(\frac{1}{n}\right)\right)\right) \\
+    &= \log (\sqrt{2 \pi n}) + \log\left(\frac{n}{e}\right)^n + \log \left(1 + \Theta\left(\frac{1}{n}\right)\right)\\ 
+    &= \Theta(n) + \Theta(n \log n) + \Theta\left(\frac{1}{n}\right)
+\end{align*}
+
+Usando la proprietà di algoritmi in sequenza(\cref{eq:alg-seq}), si ottiene:
+
+\begin{equation*}
+    T(n) = \Theta(n \log n)
+\end{equation*}
+
+\clearpage
+
+\subsection{Problema 3}
+Sia $A[1\dots n]$ un \textit{array} di $n$ elementi distinti “quasi ordinato”, ovvero in cui ogni elemento dell’\textit{array} si trova entro $k$ slot dalla sua posizione corretta. Definiamo una "inversione": se $i<j$ e $A[i] > A[j]$, allora la coppia $(i,j)$ è detta inversione di $A$. Si implementi un algoritmo che ordina il vettore $A$ in tempo $O(n \log k)$. Suggerimento: si usi un Heap.
+
+\paragraph{Soluzione} Per la soluzione è stato utilizzando un \textit{min heap} (di implementazione analogo al \textit{max heap} mostrato nel problema precedente)  di capacità $k$ e si è sfruttato il fatto che, applicando la procedura di inserimento, l'elemento in posizione $0$ sia il minimo del sotto-array $A[\dots,i, \dots k+i]$. Quindi valida l'ipotesi del vettore "quasi ordinato", l'algoritmo risolutivo è il seguente:
+
+
+\begin{lstlisting}[caption={Algoritmo per ordinare un vettore "quasi ordinato" mediante heap},captionpos=b]
+void sort_k(int arr[], int n, int k) {
+  int size = (n == k) ? k : k + 1;
+
+  // si crea un heap
+  struct heap h(size);
+
+  // inserimento dei primi k elementi nell'heap
+  for (int i = 0; i < size; ++i) {
+    h.min_heap_insert(arr[i]);
+  }
+
+  int index = 0;
+  // estrazione del minimo, rimpiazzo nel vettore iniziale
+  // inserimento del prossimo elemento nel vettore heap
+  for (int i = k + 1; i < n; i++) {
+    arr[index++] = h.extract_min();
+    h.min_heap_insert(arr[i]);
+  }
+
+  // svuotamento dell'heap con i valori rimasti
+  while (!h.empty()) {
+    arr[index++] = h.extract_min();
+  }
+}
+\end{lstlisting}
+
+
+\paragraph{Complessità}
+Per il costo $T(n)$ dell'algoritmo, bisogna analizzare singolarmente i $3$ cicli che compongono l'algoritmo.
+
+Il primo ciclo ha un costo pari a:
+\begin{equation*}
+    T_1(n) = O(k \log k)
+\end{equation*}
+
+Il secondo ha un costo pari a:
+\begin{equation*}
+    T_2(n) = O((n-k)(\log k + \log k)) = O((n-k)\log (k)^2) = O(2(n-k)\log k)
+\end{equation*}
+
+Infine, il terzo ha un costo pari a:
+\begin{equation*}
+    T_3(n) = O(k\log k)
+\end{equation*}
+
+Quindi applicando la proprietà in \cref{eq:alg-seq}, il costo totale dell'algoritmo è:
+
+\begin{equation*}
+    T(n) = O(\max\{T_1(n), T_2(n), T_3(n)\}) = T_2(n) =  O(2(n-k) \log k) = O(n \log k)
+\end{equation*}
+
+\clearpage
+
+\section{Homework}
+\subsection{Problema 1}
+Sia data una matrice di $N x M$ numeri interi positivi. Si implementi un algoritmo di
+\textit{backtracking} per determinare la lunghezza della più lunga sequenza di numeri adiacenti strettamente crescenti (un numero x è adiacente ad y si trova in alto, in alto a destra, in alto a sinistra, a destra, a sinistra, in basso, in basso a destra, in basso a sinistra rispetto ad y).
+
+\paragraph{Soluzione} La soluzione basata su \textit{backtracking} prevede l'esplorazione di tutto lo spazio delle soluzioni. Come mostrato nel listato sottostante, la procedura utilizza una matrice di appoggio in cui l'elemento $A[i][j]=true$ se la cella è parte della soluzione in esame. Questa tecnica è utilizzata per evitare \textit{loop} in quanto previene di ripercorrere due volte la stessa cella nell'arco della stessa soluzione.
+All'inizio della funzione, si aggiorna il valore massimo rispetto a quello corrente, si incrementa il valore corrente della soluzione e si marca la cella $(i,j)$ come visitata; infine si cerca la prima direzione ammissibile per trovare una nuova soluzione. Una volta esplorate tutte le soluzioni, la cella viene marcata come non visitata e si decrementa il valore della soluzione corrente.
+
+\begin{lstlisting}[caption={Procedura di calcolo della lunghezza sequenza crescente},captionpos=b]
+void _find_increasing_path(int mat[N][M], int n, int m, int i, int j, bool visited[N][M], int& current, int &res) {
+  res = max(res, current);
+
+  visited[i][j] = true;
+  current ++;
+
+  // sotto
+  if (is_valid(mat, n, m, i+1, j, mat[i][j], visited)) {
+    _find_increasing_path(mat,n, m, i+1, j, visited, current, res);
+  }
+
+  // destra
+  if (is_valid(mat, n, m, i, j+1, mat[i][j], visited)) {
+    _find_increasing_path(mat,n, m, i, j+1, visited, current, res);
+  }
+
+  // sopra
+  if (is_valid(mat, n, m, i-1, j, mat[i][j], visited)) {
+    _find_increasing_path(mat,n, m, i-1, j, visited, current, res);
+  }
+
+  // sinistra
+  if (is_valid(mat, n, m, i, j-1, mat[i][j], visited)) {
+    _find_increasing_path(mat,n, m, i, j-1, visited, current, res);
+  }
+
+  // alto sinistra
+  if (is_valid(mat, n, m, i-1, j-1, mat[i][j], visited)) {
+    _find_increasing_path(mat,n, m, i-1, j-1, visited, current, res);
+  }
+
+  // alto destra
+  if (is_valid(mat, n, m, i-1, j+1, mat[i][j], visited)) {
+    _find_increasing_path(mat,n, m, i-1, j+1, visited, current, res);
+  }
+  
+  // basso sinistra
+  if (is_valid(mat, n, m, i+1, j-1, mat[i][j], visited)) {
+    _find_increasing_path(mat,n, m, i+1, j-1, visited, current, res);
+  }
+  
+  // basso destra
+  if (is_valid(mat, n, m, i+1, j+1, mat[i][j], visited)) {
+    _find_increasing_path(mat,n, m, i+1, j+1, visited, current, res);
+  }
+  
+  visited[i][j] = false;
+  current --;
+}
+
+\end{lstlisting}
+Questa procedura ricorsiva viene richiamata da un \textit{wrapper} che si limita ad inizializzare le variabili. 
+
+\paragraph{Complessità}
+La complessità è data dalla ricorrenza:
+\begin{equation*}
+    T(n) = 8T(n-1) + 1
+\end{equation*}
+
+Si osserva che la $T(n)$ è una ricorrenza lineare di ordine costante con $a=8$ e $\beta = 0$. Pertanto, è possibile affermare che la complessità dell'algoritmo è:
+\begin{equation*}
+    T(n) = \Theta(a^n n^\beta) = \Theta(8^n)
+\end{equation*}
+
+\clearpage
+\subsection{Problema 2}
+
+Sia data un vettore di n numeri interi positivi. Si considerino le sotto-sequenze i cui valori sono ordinati in senso crescente (si assume che non ci siano duplicati). Si scriva un
+programma per trovare la somma massima tra le somme degli elementi di tali sotto-
+sequenza. Ad esempio, se l'array di input è $\{3, 4, 5, 10\}$, l'output dovrebbe essere $22 = 3 + 4 + 5 + 10$; se l'array di input è $\{10, 5, 4, 3\}$, l'output dovrebbe essere $10$.
+
+\paragraph{Soluzione} Il problema è stato risolto attraverso la programmazione dinamica. In particolare, dovendo calcolare solo la somma, basta utilizzare il vettore $dp$ a una dimensione. L'algoritmo risolutivo è mostrato di seguito:
+
+\begin{lstlisting}[caption={Calcolo della sottosequenza crescente di somma massima},captionpos=b]
+
+int max_sum_increasing_subsequence(const int arr[], const int n) {
+
+    int res = INT_MIN;
+    int dp[n];
+
+    // inizializzazione vettore dp
+    for (size_t i = 0; i < n; ++i) {
+        dp[i] = arr[i];
+    }
+
+    // calcolo della somma massima per la sottosequenza che termina in i-esima posizione
+	for (size_t i = 1; i < n; ++i) {
+    for (size_t j = 0; j < i; ++j) {
+      // sono in una sottosequenza crescente?
+      if (arr[i] > arr[j]) {
+        // incremento la somma
+        dp[i] = max(dp[i], dp[j] + arr[i]);
+      }
+    }
+  }
+
+  // calcolo del valore massimo
+	for (size_t i = 0; i < n; ++i) {
+		if (res < dp[i]) {
+		    res = dp[i];
+    }
+  }
+	return res;
+}
+\end{lstlisting}
+Il vettore $dp$ contiene alla posizione $i-esima$ il valore della somma della sotto-sequenza che termina nell'elemento $i-esimo$ dell'array di input.
+
+\paragraph{Complessità} 
+L'algoritmo ha un costo $T(n)$ dato dalla somma dei 3 cicli che lo compongono (\cref{eq:alg-seq}). Il primo ciclo inizializza il vettore $dp$ con l'elemento omologo del vettore e ha un costo di: 
+\begin{equation*}
+    T_1(n) = O(n)
+\end{equation*}
+
+Il secondo blocco dell'algoritmo ha due cicli innestati che, sfruttando la proprietà in \cref{eq:nested-loops}, ha una complessità:
+
+\begin{equation*}
+    T_2(n) = O(n^2)
+\end{equation*}
+
+Il terzo ciclo ha un costo totale di:
+\begin{equation*}
+    T_3(n) = O(n)
+\end{equation*}
+
+Quindi il costo totale è:
+\begin{equation*}
+    T(n) = \max\{T_1(n), T_2(n), T_3(n)\} = T_2(n) = O(n^2)
+\end{equation*}
+
+Infine, la complessità spaziale è $S(n) = O(n)$ data dall'utilizzo del vettore $dp$.
+\clearpage
+
+\subsection{Problema 3}
+Un numero può sempre essere rappresentato come somma di quadrati di altri numeri.
+Infatti, al limite, il valore 1 è un quadrato e possiamo sempre rappresentare un qualsiasi
+numero come ($1\cdot 1 + 1\cdot 1 + 1\cdot 1 + \dots$).
+Dato un numero n, si implementi un algoritmo che trova il numero minimo di quadrati la cui
+somma è $n$. Ad esempio, se $n = 100$, questo valore si può ottenere sommando $5^2 + 5^2 + 5^2 + 5^2$ , quindi usando $4$ quadrati, ma anche come $10^2$, quindi usando un solo quadrato.
+
+\paragraph{Soluzione}
+La soluzione del problema prevede l'utilizzo della programmazione dinamica. In particolare, ci si limita a costruire la soluzione a partire dalla relazione ricorsiva:
+
+\begin{equation*}
+    DP[i]=\begin{cases}
+        \min(DP[i], 1 + DP(i-k^2))& i > 1 \\
+        1 & i \leq 1 \\
+    \end{cases}
+\end{equation*}
+con $1\leq k \leq i \leq n$. L'approccio utilizzato è di tipo \textit{bottom-up}. Per ogni numero $i \leq n$, l'algoritmo lo può esprimere come somma di quadrati sottraendo un numero  $j\leq i$ al quadrato $(i - j^2)$ e quindi riconducendosi a un sotto-problema precedente.
+
+\begin{lstlisting}[caption={Calcolo del numero minimi di quadrati per rappresentare un numero $n$},captionpos=b]
+int min_square(const int n) {
+  
+  // inizializzo il vettore dp
+  int dp[n+1];
+
+  dp[0] = 0;
+  dp[1] = 1;
+  for(int i = 2; i <= n; ++i) {
+    dp[i] = INT_MAX;
+    for(int j = 1; (j*j) <= i; ++j) {
+      // applico la formula ricorsiva
+      dp[i] = min(dp[i], 1 + dp[i - (j*j)]);
+    }
+  }
+  return dp[n];
+}
+\end{lstlisting}
+
+\paragraph{Complessità}
+Innanzitutto, la complessità spaziale dell'algoritmo è $\Theta(n)$ in quanto viene creato un vettore con $n+1$ elementi. Mentre, il costo computazionale è $O(n\sqrt{n})$, ottenuto applicando la proprietà dei cicli innestati (\cref{eq:nested-loops}): il primo ciclo ha una complessità $O(n)$ mentre il secondo $O(\sqrt{n})$.
+
+\clearpage
+
+\section{Homework}
+\subsection{Problema}
+La S.S.C. Napoli è interessata a massimizzare i guadagni derivanti dagli ingressi allo stadio.
+Ti hanno assunto come consulente per aumentare le vendite dei “biglietti per gruppi” di
+tifosi. Bisogna risolvere il seguente problema: quando un gruppo vuole vedere una partita,
+tutti i membri del gruppo devono avere un posto, altrimenti se ne vanno. Quindi, poiché non
+vi possono essere gruppi “parziali”, le gradinate spesso non sono piene. C'è ancora spazio
+disponibile, ma non abbastanza per un intero gruppo. In tal caso, il gruppo non può sedersi,
+e il Napoli perde soldi. Si sviluppi un algoritmo per decidere quali gruppi far entrare per
+massimizzare le vendite.
+
+\paragraph{Soluzione} L'esercizio è un problema di ottimizzazione in cui si vuole massimizzare il profitto ottenuto facendo entrare gruppi più grandi di persone. Infatti, può essere ricondotto al \textit{knapsack problem} noto in letteratura e risolvibile all'ottimo attraverso la programmazione dinamica. In particolare, il problema può essere modellato come segue:
+\begin{itemize}
+    \item $C$ capacità dello stadio;
+    \item $N$ gruppi di tifosi. L'$i-esimo$ gruppo è costituito da $w[i]$ persone;
+    \item Ad ogni gruppo $i$ di tifosi è associato un valore di profitto $p[i]$ dato dall'incasso della vendita dei biglietti. Per semplicità, si assume che il costo del biglietto per tifoso sia unitario e, quindi $p[i]$ risulta pari al numero di persone nel gruppo $i-esimo$.
+\end{itemize}
+
+Il problema dello zaino può essere formulato come segue:
+\begin{equation*}
+    DP[i][c]=\begin{cases}
+        \max(DP[i-1][c], DP[i-1][c-w[i]] + p[i])& i > 1 \; \land\\
+        &c - w[i] \geq 0 \\
+        0 & i = 0 \lor c = 0 \\
+    \end{cases}
+\end{equation*}
+con $0 \leq c \leq C$ e $0 \leq i \leq N$. Il caso base è dovuto dal fatto che se non ci sono gruppi di tifosi ($i = 0$) oppure lo stadio non ha posti a sedere ($c = 0$), l'incasso è pari a $0$.
+
+
+\begin{lstlisting}[caption={Implementazione algoritmo dello zaino con ricostruzione della soluzione},captionpos=b]
+vector<int> knapsack(const int w[], const int p[], int n, int c) {
+  int dp[n+1][c+1];
+  int res = 0;
+  vector<int> sol;
+  // capienza = 0
+  for (size_t i = 0; i <= n; ++i) {
+    dp[i][0] = 0;
+  }
+  // tifosi = 0
+  for (size_t i = 0; i <= c; ++i) {
+    dp[0][i] = 0;
+  }
+
+  for(size_t i = 1; i <= n; ++i){
+    for (size_t j = 1; j<= c; ++j) {
+      // se ho capienza metto l'oggetto nello zaino
+      if (w[i-1] <= j) {
+        dp[i][j] = max(dp[i-1][j], dp[i-1][j-w[i-1]] + p[i-1]);
+      } else {
+        // altrimenti il profitto rimane invariato
+        dp[i][j] = dp[i-1][j];
+      }
+    }
+  }
+
+  res = dp[n][c];
+  for (size_t i = n, j = c; i > 0 && res > 0; i--) {
+    // se il risultato si trova in dp[i-1][j]
+    // l'elemento non non fa parte della soluzione
+    if (res == dp[i-1][j]) {
+     continue;   
+    } 
+    // altrimenti si salva il risultato nell'array
+    sol.push_back(i-1);
+             
+    // si decrementa res e j per saltare ad un altra colonna
+    res -= p[i-1];
+    j -= w[i-1];
+  }
+
+  reverse(sol.begin(), sol.end());
+  return sol;
+}
+
+\end{lstlisting}
+
+La funzione $knapsack$ accetta in input il vettore dei pesi, quello dei profitti, la capacità dello stadio e la dimensione del problema e restituisce la soluzione formata da un vettore contente gli indici dei gruppi da far entrare nello stadio per massimizzare i profitti.
+
+\paragraph{Complessità}
+L'algoritmo proposto ha complessità spaziale $S(n) = \Theta(n\cdot C)$ dato dal costo di memorizzazione della tabella $dp$. Analogamente, la complessità temporale è $T(n) = \Theta(n\cdot C)$ data dai cicli innestati per lavorare sulla matrice.
+
+\end{document}
